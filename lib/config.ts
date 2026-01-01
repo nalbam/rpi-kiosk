@@ -35,9 +35,9 @@ export const defaultConfig: KioskConfig = {
   timezone: 'America/Los_Angeles',
   dateFormat: 'EEEE, MMMM dd, yyyy',
   weatherLocation: {
-    lat: 37.5665,
-    lon: 126.9780,
-    city: 'Seoul'
+    lat: 34.04657,
+    lon: -118.244,
+    city: 'Los Angeles'
   },
   rssFeeds: [
     'https://news.google.com/rss?hl=en&gl=US&ceid=US:en',
