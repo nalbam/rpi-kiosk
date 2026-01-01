@@ -34,19 +34,24 @@ export default function RSSSettings({ config, setConfig }: RSSSettingsProps) {
 
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium mb-2">Add RSS Feed</label>
+          <label htmlFor="rss-feed-input" className="block text-sm font-medium mb-2">
+            Add RSS Feed
+          </label>
           <div className="flex gap-2">
             <input
+              id="rss-feed-input"
               type="url"
               value={rssInput}
               onChange={(e) => setRssInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddRSS()}
               className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
               placeholder="https://example.com/feed.xml"
+              aria-label="RSS feed URL to add"
             />
             <button
               onClick={handleAddRSS}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors whitespace-nowrap"
+              aria-label="Add RSS feed"
             >
               Add
             </button>
@@ -62,6 +67,7 @@ export default function RSSSettings({ config, setConfig }: RSSSettingsProps) {
                 <button
                   onClick={() => handleRemoveRSS(index)}
                   className="ml-4 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm transition-colors whitespace-nowrap"
+                  aria-label={`Remove RSS feed ${feed}`}
                 >
                   Remove
                 </button>
@@ -75,8 +81,11 @@ export default function RSSSettings({ config, setConfig }: RSSSettingsProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Refresh Interval</label>
+            <label htmlFor="rss-refresh-interval" className="block text-sm font-medium mb-2">
+              Refresh Interval
+            </label>
             <input
+              id="rss-refresh-interval"
               type="number"
               min="1"
               value={config.refreshIntervals.rss}
@@ -90,13 +99,20 @@ export default function RSSSettings({ config, setConfig }: RSSSettingsProps) {
                 }
               }}
               className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+              aria-label="RSS feed refresh interval in minutes"
+              aria-describedby="rss-refresh-hint"
             />
-            <p className="text-xs text-gray-500 mt-1">Minutes between updates</p>
+            <p id="rss-refresh-hint" className="text-xs text-gray-500 mt-1">
+              Minutes between updates
+            </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">News Items to Display</label>
+            <label htmlFor="rss-items-limit" className="block text-sm font-medium mb-2">
+              News Items to Display
+            </label>
             <input
+              id="rss-items-limit"
               type="number"
               min="1"
               max="10"
@@ -111,8 +127,12 @@ export default function RSSSettings({ config, setConfig }: RSSSettingsProps) {
                 }
               }}
               className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+              aria-label="Number of RSS news items to display (1 to 10)"
+              aria-describedby="rss-items-hint"
             />
-            <p className="text-xs text-gray-500 mt-1">1 to 10 items</p>
+            <p id="rss-items-hint" className="text-xs text-gray-500 mt-1">
+              1 to 10 items
+            </p>
           </div>
         </div>
       </div>
