@@ -201,13 +201,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">Settings</h1>
+    <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8 overflow-x-hidden">
+      <div className="max-w-4xl mx-auto w-full">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold">Settings</h1>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+            className="px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
           >
             Back to Home
           </button>
@@ -220,12 +220,12 @@ export default function SettingsPage() {
 
             <div className="space-y-4">
               <div>
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
                   <label className="block text-sm font-medium">Timezone</label>
                   {detectedTimezone && (
                     <button
                       onClick={handleApplyDetectedTimezone}
-                      className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                      className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors whitespace-nowrap flex-shrink-0"
                     >
                       Use Browser Default ({detectedTimezone})
                     </button>
@@ -288,13 +288,13 @@ export default function SettingsPage() {
 
             <div className="space-y-4">
               <div>
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col gap-2 mb-2">
                   <label className="block text-sm font-medium">City</label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {detectedCity && (
                       <button
                         onClick={handleApplyDetectedCity}
-                        className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                        className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors whitespace-nowrap"
                       >
                         Use Browser Default ({detectedCity})
                       </button>
@@ -302,7 +302,7 @@ export default function SettingsPage() {
                     {config?.timezone.includes('/') && (
                       <button
                         onClick={handleApplyCityFromTimezone}
-                        className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors"
+                        className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors whitespace-nowrap"
                       >
                         Use from Timezone ({config.timezone.split('/').pop()?.replace(/_/g, ' ')})
                       </button>
@@ -322,13 +322,13 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col gap-2 mb-2">
                   <label className="block text-sm font-medium">Coordinates</label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       onClick={handleDetectLocation}
                       disabled={detectingLocation}
-                      className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded transition-colors"
+                      className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded transition-colors whitespace-nowrap"
                     >
                       {detectingLocation ? 'Detecting...' : detectedCoordinates ? `Detected: ${detectedCoordinates.lat.toFixed(4)}, ${detectedCoordinates.lon.toFixed(4)}` : 'Detect Location'}
                     </button>
@@ -336,7 +336,7 @@ export default function SettingsPage() {
                       href={`https://www.google.com/maps?q=${config.weatherLocation.lat},${config.weatherLocation.lon}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1 text-xs bg-purple-600 hover:bg-purple-700 rounded transition-colors"
+                      className="px-3 py-1 text-xs bg-purple-600 hover:bg-purple-700 rounded transition-colors whitespace-nowrap"
                     >
                       View on Google Maps
                     </a>
