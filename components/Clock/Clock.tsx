@@ -29,10 +29,10 @@ export default function Clock() {
   if (!time) {
     return (
       <div className="text-center">
-        <div className="text-8xl font-bold mb-2 text-gray-600">
+        <div className="text-vw-8xl font-bold mb-vw-xs text-gray-600">
           --:--:--
         </div>
-        <div className="text-3xl text-gray-500">
+        <div className="text-vw-2xl text-gray-500">
           로딩 중...
         </div>
       </div>
@@ -43,13 +43,13 @@ export default function Clock() {
 
   return (
     <div className="text-center">
-      <div className="text-8xl font-bold mb-2">
+      <div className="text-vw-8xl font-bold mb-vw-xs">
         {format(zonedTime, 'HH:mm:ss')}
       </div>
-      <div className="text-3xl text-gray-400">
+      <div className="text-vw-2xl text-gray-400">
         {format(zonedTime, 'yyyy년 MM월 dd일 EEEE', { locale: ko })}
       </div>
-      <div className="text-lg text-gray-500 mt-2">
+      <div className="text-vw-base text-gray-500 mt-vw-xs">
         {timezone}
       </div>
     </div>

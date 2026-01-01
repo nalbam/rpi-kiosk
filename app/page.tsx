@@ -10,37 +10,37 @@ export default function Home() {
   const router = useRouter();
 
   return (
-    <main className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-7xl mx-auto">
+    <main className="container-fullscreen bg-black text-white">
+      <div className="flex flex-col h-full p-vw-sm">
         {/* Header with Settings Button */}
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-end mb-vw-xs flex-shrink-0">
           <button
             onClick={() => router.push('/settings')}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-sm"
+            className="px-vw-sm py-vw-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-vw-xs"
           >
             ⚙️ 설정
           </button>
         </div>
 
         {/* Clock Section */}
-        <div className="mb-12">
+        <div className="mb-vw-md flex-shrink-0">
           <Clock />
         </div>
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-vw-sm flex-1 min-h-0">
           {/* Weather Widget */}
-          <div className="lg:col-span-1">
+          <div className="flex flex-col min-h-0">
             <Weather />
           </div>
 
           {/* Calendar Widget */}
-          <div className="lg:col-span-1">
+          <div className="flex flex-col min-h-0">
             <Calendar />
           </div>
 
           {/* RSS Widget */}
-          <div className="lg:col-span-1">
+          <div className="flex flex-col min-h-0">
             <RSS />
           </div>
         </div>

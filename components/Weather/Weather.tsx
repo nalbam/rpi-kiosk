@@ -43,36 +43,36 @@ export default function Weather() {
 
   useEffect(() => {
     fetchWeather();
-    
+
     const config = getConfig();
     const interval = setInterval(fetchWeather, config.refreshIntervals.weather * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
   if (loading) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-        <h2 className="text-2xl font-semibold mb-4">날씨</h2>
-        <div className="text-gray-400">날씨 정보 로딩 중...</div>
+      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">날씨</h2>
+        <div className="text-gray-400 text-vw-sm">날씨 정보 로딩 중...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-        <h2 className="text-2xl font-semibold mb-4">날씨</h2>
-        <div className="text-gray-400">날씨 정보를 가져올 수 없습니다</div>
+      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">날씨</h2>
+        <div className="text-gray-400 text-vw-sm">날씨 정보를 가져올 수 없습니다</div>
       </div>
     );
   }
 
   if (!weather) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-        <h2 className="text-2xl font-semibold mb-4">날씨</h2>
-        <div className="text-gray-400">날씨 정보를 가져올 수 없습니다</div>
+      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">날씨</h2>
+        <div className="text-gray-400 text-vw-sm">날씨 정보를 가져올 수 없습니다</div>
       </div>
     );
   }
@@ -92,21 +92,21 @@ export default function Weather() {
   };
 
   return (
-    <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-      <h2 className="text-2xl font-semibold mb-4">날씨</h2>
-      <div className="text-center">
-        <div className="text-6xl mb-2">{getWeatherIcon(weather.weatherCode)}</div>
-        <div className="text-5xl font-bold mb-2">{weather.temperature}°C</div>
-        <div className="text-xl text-gray-300 mb-4">{weather.description}</div>
-        <div className="text-lg text-gray-400">{city}</div>
-        <div className="mt-4 grid grid-cols-2 gap-4 text-sm text-gray-400">
+    <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+      <h2 className="text-vw-xl font-semibold mb-vw-sm">날씨</h2>
+      <div className="text-center flex-1 flex flex-col justify-center">
+        <div className="text-vw-5xl mb-vw-xs">{getWeatherIcon(weather.weatherCode)}</div>
+        <div className="text-vw-4xl font-bold mb-vw-xs">{weather.temperature}°C</div>
+        <div className="text-vw-lg text-gray-300 mb-vw-sm">{weather.description}</div>
+        <div className="text-vw-base text-gray-400">{city}</div>
+        <div className="mt-vw-sm grid grid-cols-2 gap-vw-sm text-vw-sm text-gray-400">
           <div>
             <div>습도</div>
-            <div className="text-white text-lg">{weather.humidity}%</div>
+            <div className="text-white text-vw-base">{weather.humidity}%</div>
           </div>
           <div>
             <div>풍속</div>
-            <div className="text-white text-lg">{weather.windSpeed} km/h</div>
+            <div className="text-white text-vw-base">{weather.windSpeed} km/h</div>
           </div>
         </div>
       </div>

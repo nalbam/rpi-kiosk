@@ -63,10 +63,10 @@ export default function Calendar() {
 
   useEffect(() => {
     fetchCalendar();
-    
+
     const config = getConfig();
     const interval = setInterval(fetchCalendar, config.refreshIntervals.calendar * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -79,27 +79,27 @@ export default function Calendar() {
 
   if (loading) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-        <h2 className="text-2xl font-semibold mb-4">일정</h2>
-        <div className="text-gray-400">일정 로딩 중...</div>
+      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">일정</h2>
+        <div className="text-gray-400 text-vw-sm">일정 로딩 중...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-        <h2 className="text-2xl font-semibold mb-4">일정</h2>
-        <div className="text-gray-400">일정을 가져올 수 없습니다</div>
+      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">일정</h2>
+        <div className="text-gray-400 text-vw-sm">일정을 가져올 수 없습니다</div>
       </div>
     );
   }
 
   if (events.length === 0) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-        <h2 className="text-2xl font-semibold mb-4">일정</h2>
-        <div className="text-gray-400">
+      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">일정</h2>
+        <div className="text-gray-400 text-vw-sm">
           {getConfig().calendarUrl ? '예정된 일정이 없습니다' : '설정에서 캘린더 URL을 추가하세요'}
         </div>
       </div>
@@ -107,9 +107,9 @@ export default function Calendar() {
   }
 
   return (
-    <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-      <h2 className="text-2xl font-semibold mb-4">일정</h2>
-      <div className="space-y-3">
+    <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+      <h2 className="text-vw-xl font-semibold mb-vw-sm">일정</h2>
+      <div className="space-y-vw-xs overflow-y-auto flex-1 min-h-0">
         {events.map((event, index) => {
           const startDate = new Date(event.start);
           const endDate = new Date(event.end);
@@ -145,16 +145,16 @@ export default function Calendar() {
           }
 
           return (
-            <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
-              <div className="flex justify-between items-start mb-1">
-                <div className="font-semibold text-lg">{event.title}</div>
-                <div className="text-sm text-gray-400">{getDateLabel(event.start)}</div>
+            <div key={index} className="border-l-4 border-blue-500 pl-vw-sm py-vw-xs">
+              <div className="flex justify-between items-start mb-vw-xs">
+                <div className="font-semibold text-vw-base">{event.title}</div>
+                <div className="text-vw-xs text-gray-400">{getDateLabel(event.start)}</div>
               </div>
-              <div className="text-sm text-gray-400">
+              <div className="text-vw-xs text-gray-400">
                 {timeDisplay}
               </div>
               {event.location && (
-                <div className="text-sm text-gray-500 mt-1">📍 {event.location}</div>
+                <div className="text-vw-xs text-gray-500 mt-vw-xs">📍 {event.location}</div>
               )}
             </div>
           );

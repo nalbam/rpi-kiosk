@@ -48,10 +48,10 @@ export default function RSS() {
 
   useEffect(() => {
     fetchRSS();
-    
+
     const config = getConfig();
     const interval = setInterval(fetchRSS, config.refreshIntervals.rss * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -68,52 +68,52 @@ export default function RSS() {
 
   if (loading) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-        <h2 className="text-2xl font-semibold mb-4">뉴스</h2>
-        <div className="text-gray-400">뉴스 로딩 중...</div>
+      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">뉴스</h2>
+        <div className="text-gray-400 text-vw-sm">뉴스 로딩 중...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-        <h2 className="text-2xl font-semibold mb-4">뉴스</h2>
-        <div className="text-gray-400">뉴스를 가져올 수 없습니다</div>
+      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">뉴스</h2>
+        <div className="text-gray-400 text-vw-sm">뉴스를 가져올 수 없습니다</div>
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-        <h2 className="text-2xl font-semibold mb-4">뉴스</h2>
-        <div className="text-gray-400">
+      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">뉴스</h2>
+        <div className="text-gray-400 text-vw-sm">
           {getConfig().rssFeeds.length === 0 ? '설정에서 RSS 피드를 추가하세요' : '뉴스 아이템이 없습니다'}
         </div>
       </div>
     );
   }
 
-  const displayItems = items.length > 0 
+  const displayItems = items.length > 0
     ? Array.from({ length: Math.min(5, items.length) }).map((_, i) => items[(currentIndex + i) % items.length])
     : [];
 
   return (
-    <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-      <h2 className="text-2xl font-semibold mb-4">뉴스</h2>
-      <div className="space-y-4">
+    <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
+      <h2 className="text-vw-xl font-semibold mb-vw-sm">뉴스</h2>
+      <div className="space-y-vw-sm overflow-y-auto flex-1 min-h-0">
         {displayItems.map((item) => (
-          <div key={item.link} className="border-b border-gray-700 pb-3 last:border-b-0">
+          <div key={item.link} className="border-b border-gray-700 pb-vw-xs last:border-b-0">
             <a
               href={item.link}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-blue-400 transition-colors"
             >
-              <div className="font-medium mb-1 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.title}</div>
+              <div className="font-medium mb-vw-xs overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.title}</div>
             </a>
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-vw-xs text-gray-500">
               <span>{item.source}</span>
               <span>
                 {formatDistanceToNow(new Date(item.pubDate), {
@@ -125,7 +125,7 @@ export default function RSS() {
           </div>
         ))}
       </div>
-      <div className="mt-4 flex justify-center space-x-2">
+      <div className="mt-vw-sm flex justify-center space-x-2">
         {Array.from({ length: Math.min(items.length, 5) }).map((_, index) => (
           <div
             key={index}

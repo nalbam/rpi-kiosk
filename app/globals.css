@@ -5,16 +5,69 @@
 :root {
   --background: #000000;
   --foreground: #ffffff;
+
+  /* Viewport-based sizing scales */
+  --size-base: clamp(0.5rem, 1.2vh, 1rem);          /* 8-16px */
+  --size-sm: clamp(0.625rem, 1.5vh, 1.25rem);       /* 10-20px */
+  --size-md: clamp(0.875rem, 2vh, 1.75rem);         /* 14-28px */
+  --size-lg: clamp(1rem, 2.5vh, 2rem);              /* 16-32px */
+  --size-xl: clamp(1.25rem, 3vh, 2.5rem);           /* 20-40px */
+  --size-2xl: clamp(1.5rem, 4vh, 3rem);             /* 24-48px */
+  --size-3xl: clamp(1.875rem, 5vh, 4rem);           /* 30-64px */
+  --size-4xl: clamp(2.25rem, 6vh, 5rem);            /* 36-80px */
+  --size-5xl: clamp(3rem, 8vh, 6rem);               /* 48-96px */
+  --size-6xl: clamp(3.75rem, 10vh, 8rem);           /* 60-128px */
+  --size-8xl: clamp(4.5rem, 12vh, 10rem);           /* 72-160px */
+
+  /* Spacing scales - viewport relative */
+  --spacing-xs: clamp(0.25rem, 0.5vh, 0.5rem);      /* 4-8px */
+  --spacing-sm: clamp(0.5rem, 1vh, 1rem);           /* 8-16px */
+  --spacing-md: clamp(1rem, 1.5vh, 1.5rem);         /* 16-24px */
+  --spacing-lg: clamp(1.5rem, 2vh, 2rem);           /* 24-32px */
+  --spacing-xl: clamp(2rem, 3vh, 3rem);             /* 32-48px */
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Viewport-relative text sizes */
+  .text-vw-xs { font-size: var(--size-sm); }
+  .text-vw-sm { font-size: var(--size-md); }
+  .text-vw-base { font-size: var(--size-lg); }
+  .text-vw-lg { font-size: var(--size-xl); }
+  .text-vw-xl { font-size: var(--size-2xl); }
+  .text-vw-2xl { font-size: var(--size-3xl); }
+  .text-vw-3xl { font-size: var(--size-4xl); }
+  .text-vw-4xl { font-size: var(--size-5xl); }
+  .text-vw-5xl { font-size: var(--size-6xl); }
+  .text-vw-8xl { font-size: var(--size-8xl); }
+
+  /* Container that fills viewport */
+  .container-fullscreen {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Grid that fills available space */
+  .grid-fullscreen {
+    display: grid;
+    flex: 1;
+    min-height: 0;
   }
 }
