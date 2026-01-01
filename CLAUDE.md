@@ -98,12 +98,14 @@ lib/                  # Shared utilities
 ```
 
 ## Technology Stack
-- **Framework**: Next.js 14.2.35 (App Router)
+- **Runtime**: Node.js 22 LTS
+- **Framework**: Next.js 16.1.1 (App Router)
 - **Language**: TypeScript 5
-- **Styling**: Tailwind CSS
-- **Date Handling**: date-fns, date-fns-tz
-- **Calendar Parsing**: ical.js
-- **RSS Parsing**: rss-parser
+- **UI Library**: React 19.2.3
+- **Styling**: Tailwind CSS 3.4.19
+- **Date Handling**: date-fns 4.1.0, date-fns-tz 3.2.0
+- **Calendar Parsing**: ical.js 1.5.0
+- **RSS Parsing**: rss-parser 3.13.0
 - **Weather API**: Open-Meteo (free, no API key)
 
 ## Important Patterns

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 18 or higher
+- Node.js 22 LTS or higher
 - npm or yarn package manager
 
 ## Setup Development Environment
@@ -284,10 +284,38 @@ npm install
 ```
 
 ### Build errors
-Make sure you're using Node.js 18 or higher:
+Make sure you're using Node.js 22 LTS or higher:
 ```bash
 node --version
 ```
+
+## Node.js Version Management
+
+This project requires Node.js 22 LTS. We recommend using nvm (Node Version Manager) for easy version switching.
+
+### Using nvm
+
+```bash
+# Install and use Node.js 22
+nvm install 22
+nvm use 22
+
+# Or simply (with .nvmrc file):
+nvm use
+
+# Verify version
+node --version  # Should show v22.x.x
+```
+
+### .nvmrc File
+
+This project includes a `.nvmrc` file. If you're using nvm, simply run:
+
+```bash
+nvm use
+```
+
+This will automatically switch to Node.js 22.
 
 ## License
 

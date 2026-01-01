@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { ko } from 'date-fns/locale/ko';
 import { getConfig } from '@/lib/storage';
 
 interface RSSItem {

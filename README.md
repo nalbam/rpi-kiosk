@@ -21,7 +21,7 @@
 
 - Raspberry Pi (3, 4, 또는 최신 모델)
 - Raspberry Pi OS (Bullseye 또는 최신)
-- Node.js 18 이상
+- Node.js 22 LTS 이상
 
 ### 자동 설치
 
@@ -150,10 +150,12 @@ rpi-kiosk/
 
 ## 기술 스택
 
-- **Framework**: Next.js 14
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Date Handling**: date-fns, date-fns-tz
+- **Runtime**: Node.js 22 LTS
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript 5
+- **UI Library**: React 19
+- **Styling**: Tailwind CSS 3.4
+- **Date Handling**: date-fns 4.x, date-fns-tz 3.x
 - **Calendar**: ical.js
 - **RSS**: rss-parser
 - **Weather API**: Open-Meteo (무료, API 키 불필요)

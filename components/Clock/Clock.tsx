@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
-import { ko } from 'date-fns/locale';
+import { toZonedTime } from 'date-fns-tz';
+import { ko } from 'date-fns/locale/ko';
 import { getConfig } from '@/lib/storage';
 
 export default function Clock() {
@@ -39,7 +39,7 @@ export default function Clock() {
     );
   }
 
-  const zonedTime = utcToZonedTime(time, timezone);
+  const zonedTime = toZonedTime(time, timezone);
 
   return (
     <div className="text-center">
