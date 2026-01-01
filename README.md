@@ -30,6 +30,18 @@ cd rpi-kiosk
 - npm 의존성 설치 및 빌드
 - systemd 서비스 등록 및 시작
 
+## 업데이트
+
+```bash
+./scripts/update.sh
+```
+
+최신 코드를 가져와서 자동으로 빌드하고 서비스를 재시작합니다:
+- git pull (최신 코드)
+- npm install (의존성 업데이트)
+- npm run build (재빌드)
+- systemctl restart (서비스 재시작)
+
 ## 제거
 
 ```bash
@@ -106,6 +118,9 @@ sudo journalctl -u rpi-kiosk -f
 
 # 중지
 sudo systemctl stop rpi-kiosk
+
+# 시작
+sudo systemctl start rpi-kiosk
 ```
 
 ## 개발
