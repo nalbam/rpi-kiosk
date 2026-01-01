@@ -133,6 +133,104 @@ list_config() {
     fi
 }
 
+# Add RSS feed
+add_rss() {
+    local url=$1
+
+    if [ ! -f "$CONFIG_PATH" ]; then
+        echo -e "${YELLOW}Config file not found. Creating from example...${NC}"
+        init_config
+    fi
+
+    # Check if jq is available
+    if ! command -v jq &> /dev/null; then
+        echo -e "${YELLOW}Warning: jq not installed. Manual edit required.${NC}"
+        echo "Please install jq: sudo apt-get install jq"
+        exit 1
+    fi
+
+    # Check if URL already exists
+    if jq -e ".rssFeeds | index(\"$url\")" "$CONFIG_PATH" > /dev/null 2>&1; then
+        echo -e "${YELLOW}RSS feed already exists: $url${NC}"
+        return
+    fi
+
+    # Create temporary file
+    local tmp_file=$(mktemp)
+
+    # Add URL to rssFeeds array
+    jq ".rssFeeds += [\"$url\"]" "$CONFIG_PATH" > "$tmp_file" 2>&1
+
+    # Check if jq command succeeded
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: Failed to add RSS feed${NC}"
+        cat "$tmp_file"
+        rm "$tmp_file"
+        exit 1
+    fi
+
+    mv "$tmp_file" "$CONFIG_PATH"
+    echo -e "${GREEN}Added RSS feed: $url${NC}"
+}
+
+# Remove RSS feed
+remove_rss() {
+    local identifier=$1
+
+    if [ ! -f "$CONFIG_PATH" ]; then
+        echo -e "${RED}Error: Config file not found. Run: $0 init${NC}"
+        exit 1
+    fi
+
+    # Check if jq is available
+    if ! command -v jq &> /dev/null; then
+        echo -e "${YELLOW}Warning: jq not installed. Manual edit required.${NC}"
+        echo "Please install jq: sudo apt-get install jq"
+        exit 1
+    fi
+
+    # Create temporary file
+    local tmp_file=$(mktemp)
+
+    # Check if identifier is a number (index) or URL
+    if [[ $identifier =~ ^[0-9]+$ ]]; then
+        # Remove by index
+        jq ".rssFeeds |= del(.[$identifier])" "$CONFIG_PATH" > "$tmp_file" 2>&1
+        local feed_type="at index $identifier"
+    else
+        # Remove by URL
+        jq ".rssFeeds -= [\"$identifier\"]" "$CONFIG_PATH" > "$tmp_file" 2>&1
+        local feed_type="$identifier"
+    fi
+
+    # Check if jq command succeeded
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: Failed to remove RSS feed${NC}"
+        cat "$tmp_file"
+        rm "$tmp_file"
+        exit 1
+    fi
+
+    mv "$tmp_file" "$CONFIG_PATH"
+    echo -e "${GREEN}Removed RSS feed: $feed_type${NC}"
+}
+
+# List RSS feeds
+list_rss() {
+    if [ ! -f "$CONFIG_PATH" ]; then
+        echo -e "${RED}Error: Config file not found. Run: $0 init${NC}"
+        exit 1
+    fi
+
+    if command -v jq &> /dev/null; then
+        echo -e "${GREEN}RSS Feeds:${NC}"
+        jq -r '.rssFeeds | to_entries[] | "\(.key): \(.value)"' "$CONFIG_PATH"
+    else
+        echo -e "${YELLOW}Warning: jq not installed${NC}"
+        grep -A 100 '"rssFeeds"' "$CONFIG_PATH"
+    fi
+}
+
 # Show usage information
 usage() {
     cat << EOF
@@ -143,8 +241,12 @@ Commands:
   get <key>                     Get configuration value
   set <key> <value>             Set configuration value
   list                          List all configuration
+  add-rss <url>                 Add RSS feed URL
+  remove-rss <url|index>        Remove RSS feed by URL or index
+  list-rss                      List all RSS feeds
 
 Examples:
+  # Basic configuration
   $0 init
   $0 get timezone
   $0 set timezone "America/New_York"
@@ -153,6 +255,13 @@ Examples:
   $0 set weatherLocation.city "New York"
   $0 set displayLimits.rssItems 10
   $0 list
+
+  # RSS feed management
+  $0 add-rss "https://news.google.com/rss?hl=en&gl=US&ceid=US:en"
+  $0 add-rss "https://feeds.bbci.co.uk/news/rss.xml"
+  $0 list-rss
+  $0 remove-rss "https://news.google.com/rss?hl=en&gl=US&ceid=US:en"
+  $0 remove-rss 0
 
 Available Configuration Keys:
   timezone
@@ -197,6 +306,25 @@ case "$1" in
         ;;
     list)
         list_config
+        ;;
+    add-rss)
+        if [ -z "$2" ]; then
+            echo -e "${RED}Error: Missing RSS feed URL${NC}"
+            usage
+            exit 1
+        fi
+        add_rss "$2"
+        ;;
+    remove-rss)
+        if [ -z "$2" ]; then
+            echo -e "${RED}Error: Missing RSS feed URL or index${NC}"
+            usage
+            exit 1
+        fi
+        remove_rss "$2"
+        ;;
+    list-rss)
+        list_rss
         ;;
     *)
         usage
