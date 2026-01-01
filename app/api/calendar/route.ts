@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import ICAL from 'ical.js';
+import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -12,8 +13,18 @@ export async function GET(request: Request) {
     );
   }
 
+  // Validate URL to prevent SSRF attacks
+  const validation = validateCalendarUrl(calendarUrl);
+  if (!validation.valid) {
+    return NextResponse.json(
+      { error: validation.error || 'Invalid calendar URL' },
+      { status: 400 }
+    );
+  }
+
   try {
-    const response = await fetch(calendarUrl);
+    // Fetch with timeout and size limits
+    const response = await fetchWithTimeout(calendarUrl, 10000, 5 * 1024 * 1024); // 10s timeout, 5MB max
     
     if (!response.ok) {
       throw new Error('Failed to fetch calendar data');

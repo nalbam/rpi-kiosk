@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Parser from 'rss-parser';
+import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,13 +14,28 @@ export async function GET(request: Request) {
   }
 
   try {
-    const parser = new Parser();
     const urls = feedUrls.split(',');
     const allItems: any[] = [];
 
     for (const url of urls) {
+      const trimmedUrl = url.trim();
+      
+      // Validate each RSS feed URL to prevent SSRF
+      const validation = validateCalendarUrl(trimmedUrl);
+      if (!validation.valid) {
+        console.error(`Invalid RSS feed URL ${trimmedUrl}: ${validation.error}`);
+        continue; // Skip invalid URLs but continue with others
+      }
+
       try {
-        const feed = await parser.parseURL(url.trim());
+        // Fetch RSS feed with timeout protection
+        const response = await fetchWithTimeout(trimmedUrl, 10000, 5 * 1024 * 1024);
+        const xmlText = await response.text();
+        
+        // Parse the RSS feed
+        const parser = new Parser();
+        const feed = await parser.parseString(xmlText);
+        
         const items = feed.items.slice(0, 10).map(item => ({
           title: item.title || '',
           link: item.link || '',
@@ -28,7 +44,7 @@ export async function GET(request: Request) {
         }));
         allItems.push(...items);
       } catch (error) {
-        console.error(`Failed to fetch RSS feed ${url}:`, error);
+        console.error(`Failed to fetch RSS feed ${trimmedUrl}:`, error);
       }
     }
 

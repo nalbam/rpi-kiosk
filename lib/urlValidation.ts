@@ -1,0 +1,172 @@
+import { URL } from 'url';
+import { isIP } from 'net';
+
+/**
+ * Validates a URL to prevent SSRF attacks
+ * Checks protocol, hostname, IP ranges, and ports
+ */
+export function validateCalendarUrl(urlString: string): { valid: boolean; error?: string } {
+  let url: URL;
+  
+  try {
+    url = new URL(urlString);
+  } catch {
+    return { valid: false, error: 'Invalid URL format' };
+  }
+
+  // Only allow http and https protocols
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    return { valid: false, error: 'Only HTTP and HTTPS protocols are allowed' };
+  }
+
+  const hostname = url.hostname.toLowerCase();
+
+  // Block localhost and common loopback names
+  const localhostPatterns = [
+    'localhost',
+    '127.0.0.1',
+    '0.0.0.0',
+    '::1',
+    '::ffff:127.0.0.1',
+  ];
+  
+  if (localhostPatterns.some(pattern => hostname === pattern || hostname.includes(pattern))) {
+    return { valid: false, error: 'Localhost URLs are not allowed' };
+  }
+
+  // Block metadata service IPs (cloud providers)
+  const metadataIPs = [
+    '169.254.169.254', // AWS, Azure, GCP metadata
+    'fd00:ec2::254',   // AWS IPv6 metadata
+  ];
+  
+  if (metadataIPs.includes(hostname)) {
+    return { valid: false, error: 'Metadata service URLs are not allowed' };
+  }
+
+  // Check if hostname is an IP address
+  const ipVersion = isIP(hostname);
+  if (ipVersion) {
+    if (!isAllowedIP(hostname, ipVersion)) {
+      return { valid: false, error: 'IP address is in a restricted range' };
+    }
+  }
+
+  // Block privileged and commonly dangerous ports
+  const port = url.port ? parseInt(url.port, 10) : (url.protocol === 'https:' ? 443 : 80);
+  const blockedPorts = [
+    // Privileged ports (except 80, 443)
+    22,   // SSH
+    23,   // Telnet
+    25,   // SMTP
+    3306, // MySQL
+    5432, // PostgreSQL
+    6379, // Redis
+    27017, // MongoDB
+    // Other dangerous ports
+    21,   // FTP
+    110,  // POP3
+    143,  // IMAP
+    3389, // RDP
+    5900, // VNC
+    8080, // Common HTTP alt
+    // Allow 80 and 443 (standard HTTP/HTTPS)
+  ];
+
+  if (port < 1024 && port !== 80 && port !== 443) {
+    return { valid: false, error: 'Port in privileged range (1-1023) is not allowed except 80 and 443' };
+  }
+
+  if (blockedPorts.includes(port)) {
+    return { valid: false, error: 'Port is not allowed' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Checks if an IP address is in an allowed range
+ * Blocks private, loopback, link-local, and reserved ranges
+ */
+function isAllowedIP(ip: string, version: number): boolean {
+  if (version === 4) {
+    const parts = ip.split('.').map(Number);
+    
+    // Loopback (127.0.0.0/8)
+    if (parts[0] === 127) return false;
+    
+    // Private ranges
+    // 10.0.0.0/8
+    if (parts[0] === 10) return false;
+    
+    // 172.16.0.0/12
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return false;
+    
+    // 192.168.0.0/16
+    if (parts[0] === 192 && parts[1] === 168) return false;
+    
+    // Link-local (169.254.0.0/16)
+    if (parts[0] === 169 && parts[1] === 254) return false;
+    
+    // Multicast (224.0.0.0/4)
+    if (parts[0] >= 224 && parts[0] <= 239) return false;
+    
+    // Reserved (240.0.0.0/4)
+    if (parts[0] >= 240) return false;
+    
+    // 0.0.0.0/8
+    if (parts[0] === 0) return false;
+    
+    return true;
+  } else if (version === 6) {
+    const lower = ip.toLowerCase();
+    
+    // Loopback (::1)
+    if (lower === '::1') return false;
+    
+    // Link-local (fe80::/10)
+    if (lower.startsWith('fe80:')) return false;
+    
+    // Unique local (fc00::/7)
+    if (lower.startsWith('fc') || lower.startsWith('fd')) return false;
+    
+    // IPv4-mapped IPv6 (::ffff:0:0/96)
+    if (lower.includes('::ffff:')) return false;
+    
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Fetches a URL with timeout protection
+ */
+export async function fetchWithTimeout(
+  url: string,
+  timeoutMs: number = 10000,
+  maxSize: number = 10 * 1024 * 1024 // 10MB default
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      redirect: 'follow', // Follow redirects but limit to default (20)
+      headers: {
+        'User-Agent': 'RPI-Kiosk/1.0',
+      },
+    });
+
+    // Check response size
+    const contentLength = response.headers.get('content-length');
+    if (contentLength && parseInt(contentLength, 10) > maxSize) {
+      throw new Error('Response size exceeds maximum allowed');
+    }
+
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
