@@ -3,9 +3,10 @@ import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
 import { API, PROCESSING_LIMITS } from '@/lib/constants';
 import {
   createErrorResponse,
-  createValidationError,
   createSuccessResponse,
   handleValidation,
+  getRequiredParam,
+  isErrorResponse,
 } from '@/lib/apiHelpers';
 
 interface CalendarEvent {
@@ -20,9 +21,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   // Get and validate required parameter
-  const calendarUrl = searchParams.get('url');
-  if (!calendarUrl) {
-    return createValidationError('Missing calendar URL');
+  const calendarUrl = getRequiredParam(searchParams, 'url');
+  if (isErrorResponse(calendarUrl)) {
+    return calendarUrl;
   }
 
   // Validate URL to prevent SSRF attacks

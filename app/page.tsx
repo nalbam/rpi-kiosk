@@ -9,6 +9,7 @@ import Weather from '@/components/Weather/Weather';
 import Calendar from '@/components/Calendar/Calendar';
 import RSS from '@/components/RSS/RSS';
 import Toast from '@/components/shared/Toast';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 
 // Toast handler component that uses useSearchParams
 function ToastHandler() {
@@ -65,6 +66,7 @@ export default function Home() {
           <button
             onClick={() => router.push('/settings')}
             className="px-vw-sm py-vw-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-vw-xs flex items-center gap-2"
+            aria-label="Open settings"
           >
             <Settings size={16} />
           </button>
@@ -79,17 +81,23 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-vw-sm flex-1 min-h-0">
           {/* Weather Widget */}
           <div className="flex flex-col min-h-0">
-            <Weather />
+            <ErrorBoundary widgetName="Weather">
+              <Weather />
+            </ErrorBoundary>
           </div>
 
           {/* Calendar Widget */}
           <div className="flex flex-col min-h-0">
-            <Calendar />
+            <ErrorBoundary widgetName="Calendar">
+              <Calendar />
+            </ErrorBoundary>
           </div>
 
           {/* RSS Widget */}
           <div className="flex flex-col min-h-0">
-            <RSS />
+            <ErrorBoundary widgetName="RSS">
+              <RSS />
+            </ErrorBoundary>
           </div>
         </div>
       </div>

@@ -170,9 +170,6 @@ export default function LocationSettings({
         detectLocationByIP(),
       ]);
 
-      console.log('GPS location:', gpsCoords);
-      console.log('IP location:', ipLocation);
-
       // Combine the best data from both sources
       let finalCoords = gpsCoords || (ipLocation ? { lat: ipLocation.lat, lon: ipLocation.lon } : null);
       let finalCity = ipLocation?.city || null;
@@ -234,12 +231,6 @@ export default function LocationSettings({
           city: finalCity || config.weatherLocation.city,
         },
         timezone: finalTimezone || config.timezone,
-      });
-
-      console.log('Final location data:', {
-        coords: finalCoords,
-        city: finalCity,
-        timezone: finalTimezone,
       });
     } catch (error) {
       console.error('Location detection error:', error);

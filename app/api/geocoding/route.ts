@@ -4,6 +4,8 @@ import {
   createErrorResponse,
   createValidationError,
   createSuccessResponse,
+  getRequiredParam,
+  isErrorResponse,
 } from '@/lib/apiHelpers';
 
 export interface GeocodingResult {
@@ -28,9 +30,14 @@ interface OpenMeteoGeocodingResult {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q');
+  const queryParam = getRequiredParam(searchParams, 'q');
 
-  if (!query || query.trim().length === 0) {
+  if (isErrorResponse(queryParam)) {
+    return queryParam;
+  }
+
+  const query = queryParam.trim();
+  if (query.length === 0) {
     return createValidationError('Missing query parameter');
   }
 

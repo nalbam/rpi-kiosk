@@ -3,8 +3,9 @@ import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
 import { API, PROCESSING_LIMITS } from '@/lib/constants';
 import {
   createErrorResponse,
-  createValidationError,
   createSuccessResponse,
+  getRequiredParam,
+  isErrorResponse,
 } from '@/lib/apiHelpers';
 
 interface RSSItem {
@@ -18,9 +19,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
   // Get and validate required parameter
-  const feedUrls = searchParams.get('urls');
-  if (!feedUrls) {
-    return createValidationError('Missing feed URLs');
+  const feedUrls = getRequiredParam(searchParams, 'urls');
+  if (isErrorResponse(feedUrls)) {
+    return feedUrls;
   }
 
   try {

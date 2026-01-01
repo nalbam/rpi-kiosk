@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { format, isSameDay, isToday, isTomorrow } from 'date-fns';
 import { MapPin } from 'lucide-react';
-import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
-import { useAutoRefresh } from '@/lib/hooks/useAutoRefresh';
+import { useWidgetData } from '@/lib/hooks/useWidgetData';
 import { WidgetContainer } from '@/components/shared/WidgetContainer';
 
 interface CalendarEvent {
@@ -15,75 +14,32 @@ interface CalendarEvent {
   location: string;
 }
 
+interface CalendarResponse {
+  events: CalendarEvent[];
+}
+
 export default function Calendar() {
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [displayLimit, setDisplayLimit] = useState(5);
 
-  const { config } = useConfigWithRetry({
+  const { data, loading, error, config } = useWidgetData<CalendarResponse>({
     componentName: 'Calendar',
+    refreshKey: 'calendar',
+    buildUrl: (config) => {
+      // If no calendar URL configured, return empty string (will be handled by validation)
+      if (!config.calendarUrl) return '';
+      return `/api/calendar?url=${encodeURIComponent(config.calendarUrl)}`;
+    },
+    validateResponse: (data): data is CalendarResponse =>
+      typeof data === 'object' &&
+      data !== null &&
+      'events' in data &&
+      Array.isArray(data.events),
     onConfigReady: (config) => {
       setDisplayLimit(config.displayLimits.calendarEvents);
     },
   });
 
-  const fetchCalendar = async () => {
-    if (!config) return;
-
-    // If no calendar URL configured, just finish loading
-    if (!config.calendarUrl) {
-      setLoading(false);
-      return;
-    }
-
-    // Basic client-side URL validation
-    try {
-      const url = new URL(config.calendarUrl);
-      if (!['http:', 'https:'].includes(url.protocol)) {
-        console.error('Invalid URL protocol:', url.protocol);
-        setError(true);
-        setLoading(false);
-        return;
-      }
-    } catch {
-      console.error('Invalid URL format:', config.calendarUrl);
-      setError(true);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `/api/calendar?url=${encodeURIComponent(config.calendarUrl)}`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        // Validate response structure
-        if (data && Array.isArray(data.events)) {
-          setEvents(data.events);
-          setError(false);
-        } else {
-          console.error('Invalid calendar response structure:', data);
-          setError(true);
-        }
-      } else {
-        setError(true);
-      }
-    } catch (error) {
-      console.error('Failed to fetch calendar:', error);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useAutoRefresh({
-    refreshKey: 'calendar',
-    onRefresh: fetchCalendar,
-    enabled: !!config,
-  });
+  const events = data?.events ?? [];
 
   const getDateLabel = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -104,7 +60,7 @@ export default function Calendar() {
       empty={events.length === 0}
       emptyMessage="No upcoming events"
     >
-      <div className="space-y-vw-xs overflow-y-auto flex-1 min-h-0">
+      <ul className="space-y-vw-xs overflow-y-auto flex-1 min-h-0" aria-label="Upcoming calendar events">
         {displayEvents.map((event, index) => {
           const startDate = new Date(event.start);
           const endDate = new Date(event.end);
@@ -140,24 +96,26 @@ export default function Calendar() {
           }
 
           return (
-            <div key={index} className="border-l-4 border-blue-500 pl-vw-sm py-vw-xs">
-              <div className="flex justify-between items-start mb-vw-xs">
-                <div className="font-semibold text-vw-base">{event.title}</div>
-                <div className="text-vw-xs text-gray-400">{getDateLabel(event.start)}</div>
-              </div>
-              <div className="text-vw-xs text-gray-400">
-                {timeDisplay}
-              </div>
-              {event.location && (
-                <div className="text-vw-xs text-gray-500 mt-vw-xs flex items-center gap-1">
-                  <MapPin size={12} className="flex-shrink-0" />
-                  <span>{event.location}</span>
+            <li key={index}>
+              <article className="border-l-4 border-blue-500 pl-vw-sm py-vw-xs" aria-label={`${event.title}, ${getDateLabel(event.start)}`}>
+                <div className="flex justify-between items-start mb-vw-xs">
+                  <div className="font-semibold text-vw-base">{event.title}</div>
+                  <div className="text-vw-xs text-gray-400">{getDateLabel(event.start)}</div>
                 </div>
-              )}
-            </div>
+                <div className="text-vw-xs text-gray-400">
+                  {timeDisplay}
+                </div>
+                {event.location && (
+                  <div className="text-vw-xs text-gray-500 mt-vw-xs flex items-center gap-1">
+                    <MapPin size={12} className="flex-shrink-0" />
+                    <span>{event.location}</span>
+                  </div>
+                )}
+              </article>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </WidgetContainer>
   );
 }

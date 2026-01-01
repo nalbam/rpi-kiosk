@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, Thermometer } from 'lucide-react';
-import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
-import { useAutoRefresh } from '@/lib/hooks/useAutoRefresh';
+import { useWidgetData } from '@/lib/hooks/useWidgetData';
 import { WidgetContainer } from '@/components/shared/WidgetContainer';
 
 interface WeatherData {
@@ -15,51 +14,23 @@ interface WeatherData {
 }
 
 export default function Weather() {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [city, setCity] = useState('');
 
-  const { config } = useConfigWithRetry({
+  const { data: weather, loading, error } = useWidgetData<WeatherData>({
     componentName: 'Weather',
+    refreshKey: 'weather',
+    buildUrl: (config) =>
+      `/api/weather?lat=${config.weatherLocation.lat}&lon=${config.weatherLocation.lon}`,
+    validateResponse: (data): data is WeatherData =>
+      typeof data === 'object' &&
+      data !== null &&
+      'temperature' in data &&
+      'weatherCode' in data &&
+      typeof data.temperature === 'number' &&
+      typeof data.weatherCode === 'number',
     onConfigReady: (config) => {
       setCity(config.weatherLocation.city);
     },
-  });
-
-  const fetchWeather = async () => {
-    if (!config) return;
-
-    try {
-      const response = await fetch(
-        `/api/weather?lat=${config.weatherLocation.lat}&lon=${config.weatherLocation.lon}`
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        // Validate response structure
-        if (data && typeof data.temperature === 'number' && typeof data.weatherCode === 'number') {
-          setWeather(data);
-          setError(false);
-        } else {
-          console.error('Invalid weather response structure:', data);
-          setError(true);
-        }
-      } else {
-        setError(true);
-      }
-    } catch (error) {
-      console.error('Failed to fetch weather:', error);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useAutoRefresh({
-    refreshKey: 'weather',
-    onRefresh: fetchWeather,
-    enabled: !!config,
   });
 
   const getWeatherIcon = (code: number) => {

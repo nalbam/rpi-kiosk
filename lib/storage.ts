@@ -193,7 +193,6 @@ export async function detectLocationByIP(): Promise<{ lat: number; lon: number; 
           city: data.city,
           timezone: data.timezone, // IANA format like "America/Los_Angeles"
         };
-        console.log('IP-based location detected:', result);
         return result;
       } else {
         console.warn('IP-based location data incomplete');
@@ -248,8 +247,7 @@ export async function saveConfig(config: Partial<KioskConfig>): Promise<{ succes
     });
 
     if (response.ok) {
-      const result = await response.json();
-      console.log('Configuration saved to server:', result.config);
+      await response.json();
       return { success: true };
     } else {
       const error = await response.json();

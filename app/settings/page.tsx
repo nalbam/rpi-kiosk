@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const [config, setConfig] = useState<KioskConfig | null>(null);
   const [errorToast, setErrorToast] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Load configuration from server
   useEffect(() => {
@@ -39,23 +40,35 @@ export default function SettingsPage() {
 
 
   const handleSave = async () => {
-    if (config) {
-      const result = await saveConfig(config);
-      if (result.success) {
-        router.push('/?message=saved');
-      } else {
-        setErrorToast(result.error || 'Failed to save settings');
+    if (config && !saving) {
+      setSaving(true);
+      try {
+        const result = await saveConfig(config);
+        if (result.success) {
+          router.push('/?message=saved');
+        } else {
+          setErrorToast(result.error || 'Failed to save settings');
+        }
+      } finally {
+        setSaving(false);
       }
     }
   };
 
   const handleReset = async () => {
+    if (saving) return;
+
     if (confirm('Are you sure you want to reset all settings to default values?')) {
-      const result = await saveConfig(defaultConfig);
-      if (result.success) {
-        router.push('/?message=reset');
-      } else {
-        setErrorToast(result.error || 'Failed to reset settings');
+      setSaving(true);
+      try {
+        const result = await saveConfig(defaultConfig);
+        if (result.success) {
+          router.push('/?message=reset');
+        } else {
+          setErrorToast(result.error || 'Failed to reset settings');
+        }
+      } finally {
+        setSaving(false);
       }
     }
   };
@@ -108,13 +121,15 @@ export default function SettingsPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={handleSave}
-              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-base sm:text-lg font-semibold transition-colors"
+              disabled={saving}
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-base sm:text-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save
+              {saving ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={handleReset}
-              className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-base sm:text-lg font-semibold transition-colors whitespace-nowrap"
+              disabled={saving}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-base sm:text-lg font-semibold transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Reset to Defaults
             </button>
