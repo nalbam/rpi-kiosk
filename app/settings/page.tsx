@@ -82,6 +82,8 @@ export default function SettingsPage() {
   // Filter timezones based on search query
   const filteredTimezones = timezones.filter((tz) => {
     if (!timezoneFilter.trim()) return true;
+    // Always include the currently selected timezone to maintain select validity
+    if (config && tz === config.timezone) return true;
     return tz.toLowerCase().includes(timezoneFilter.toLowerCase());
   });
 
@@ -440,7 +442,18 @@ export default function SettingsPage() {
 
                 {/* Timezone */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">Timezone</label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium">Timezone</label>
+                    {detectedTimezone && (
+                      <button
+                        onClick={handleApplyDetectedTimezone}
+                        className="px-3 py-1 text-xs bg-indigo-600 hover:bg-indigo-700 rounded transition-colors whitespace-nowrap flex items-center gap-1"
+                      >
+                        <Clock className="w-3 h-3" />
+                        Use Browser Default ({detectedTimezone.split('/').pop()?.replace(/_/g, ' ')})
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={timezoneFilter}
