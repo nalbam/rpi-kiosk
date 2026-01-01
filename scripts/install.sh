@@ -87,8 +87,45 @@ npm install --legacy-peer-deps
 echo "[5/6] Building application..."
 npm run build
 
-# Step 6: Install systemd service
-echo "[6/6] Installing systemd service..."
+# Step 6: Set desktop wallpaper
+echo "[6/7] Setting desktop wallpaper..."
+
+# Create config directory for backup
+CONFIG_DIR="$INSTALL_HOME/.config/rpi-kiosk"
+mkdir -p "$CONFIG_DIR"
+
+# Check if running in graphical environment
+if [ -n "$DISPLAY" ] || [ -f "$INSTALL_HOME/.config/pcmanfm/LXDE-pi/desktop-items-0.conf" ]; then
+    # Backup current wallpaper path
+    CURRENT_WALLPAPER=""
+    if [ -f "$INSTALL_HOME/.config/pcmanfm/LXDE-pi/desktop-items-0.conf" ]; then
+        CURRENT_WALLPAPER=$(grep "^wallpaper=" "$INSTALL_HOME/.config/pcmanfm/LXDE-pi/desktop-items-0.conf" | cut -d'=' -f2)
+        echo "  - Current wallpaper: $CURRENT_WALLPAPER"
+        echo "$CURRENT_WALLPAPER" > "$CONFIG_DIR/wallpaper.backup"
+    fi
+
+    # Copy background image to home directory
+    WALLPAPER_PATH="$INSTALL_HOME/.config/rpi-kiosk/background.png"
+    if [ -f "$INSTALL_DIR/public/background.png" ]; then
+        cp "$INSTALL_DIR/public/background.png" "$WALLPAPER_PATH"
+        echo "  - Copied background.png to $WALLPAPER_PATH"
+
+        # Set wallpaper using pcmanfm
+        if command -v pcmanfm &> /dev/null; then
+            DISPLAY=:0 pcmanfm --set-wallpaper "$WALLPAPER_PATH" 2>/dev/null || true
+            echo "  - Set desktop wallpaper to background.png"
+        else
+            echo "  - Warning: pcmanfm not found, skipping wallpaper setup"
+        fi
+    else
+        echo "  - Warning: public/background.png not found, skipping wallpaper setup"
+    fi
+else
+    echo "  - Skipping wallpaper setup (no graphical environment detected)"
+fi
+
+# Step 7: Install systemd service
+echo "[7/7] Installing systemd service..."
 
 # Make start script executable
 chmod +x scripts/start-kiosk.sh

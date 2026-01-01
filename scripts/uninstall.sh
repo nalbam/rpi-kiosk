@@ -58,9 +58,38 @@ else
 fi
 
 # Step 4: Reload systemd daemon
-echo "[4/4] Reloading systemd daemon..."
+echo "[4/5] Reloading systemd daemon..."
 sudo systemctl daemon-reload
 sudo systemctl reset-failed
+
+# Step 5: Restore original wallpaper
+echo "[5/5] Restoring original wallpaper..."
+
+INSTALL_USER=${SUDO_USER:-$USER}
+INSTALL_HOME=$(eval echo ~$INSTALL_USER)
+CONFIG_DIR="$INSTALL_HOME/.config/rpi-kiosk"
+BACKUP_FILE="$CONFIG_DIR/wallpaper.backup"
+
+if [ -f "$BACKUP_FILE" ]; then
+    ORIGINAL_WALLPAPER=$(cat "$BACKUP_FILE")
+    if [ -n "$ORIGINAL_WALLPAPER" ] && [ -f "$ORIGINAL_WALLPAPER" ]; then
+        echo "  - Restoring wallpaper to: $ORIGINAL_WALLPAPER"
+        if command -v pcmanfm &> /dev/null; then
+            DISPLAY=:0 pcmanfm --set-wallpaper "$ORIGINAL_WALLPAPER" 2>/dev/null || true
+            echo "  - Desktop wallpaper restored"
+        fi
+    else
+        echo "  - Original wallpaper file not found, skipping restore"
+    fi
+
+    # Clean up backup and wallpaper files
+    rm -f "$BACKUP_FILE"
+    rm -f "$CONFIG_DIR/background.png"
+    rmdir "$CONFIG_DIR" 2>/dev/null || true
+    echo "  - Cleaned up wallpaper backup files"
+else
+    echo "  - No wallpaper backup found, skipping restore"
+fi
 
 # -----------------------------------------------------------------------------
 # Uninstallation Complete
@@ -72,6 +101,7 @@ echo "Uninstallation Complete!"
 echo "========================================="
 echo ""
 echo "Service removed: rpi-kiosk.service"
+echo "Wallpaper restored to original"
 echo ""
 echo "Note: The following are NOT removed:"
 echo "  - Application files in ~/rpi-kiosk"

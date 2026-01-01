@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "RPI Kiosk",
   description: "Raspberry Pi Kiosk Display",
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/logo.png',
+  },
 };
 
 export const viewport: Viewport = {
