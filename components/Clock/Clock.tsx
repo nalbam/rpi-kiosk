@@ -18,12 +18,43 @@ export default function Clock() {
   const [dateFormat, setDateFormat] = useState('EEEE, MMMM dd, yyyy');
 
   useEffect(() => {
+    let isMounted = true;
+    let retryCount = 0;
+    const maxRetries = 10; // Max 10 retries (5 seconds total)
+    const retryDelay = 500; // 500ms between retries
+
     async function loadConfig() {
       const config = await getConfig();
-      setTimezone(config.timezone);
-      setDateFormat(config.dateFormat || 'EEEE, MMMM dd, yyyy');
+
+      // Check if config is not yet initialized (first visit)
+      if ((config as any)._initialized === false && retryCount < maxRetries) {
+        retryCount++;
+        console.log(`Config not initialized yet, retrying in ${retryDelay}ms... (${retryCount}/${maxRetries})`);
+        setTimeout(() => {
+          if (isMounted) {
+            loadConfig();
+          }
+        }, retryDelay);
+        return;
+      }
+
+      // Config is ready or max retries reached
+      if (isMounted) {
+        setTimezone(config.timezone);
+        setDateFormat(config.dateFormat || 'EEEE, MMMM dd, yyyy');
+        if ((config as any)._initialized === false) {
+          console.warn('Config initialization timeout - using default values');
+        } else {
+          console.log('Config loaded successfully:', config.timezone);
+        }
+      }
     }
+
     loadConfig();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {

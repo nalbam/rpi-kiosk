@@ -18,9 +18,24 @@ export default function Weather() {
   const [error, setError] = useState(false);
   const [city, setCity] = useState('');
 
-  const fetchWeather = async () => {
+  const fetchWeather = async (retryCount = 0, maxRetries = 10, retryDelay = 500) => {
     try {
       const config = await getConfig();
+
+      // Check if config is not yet initialized (first visit)
+      if ((config as any)._initialized === false && retryCount < maxRetries) {
+        console.log(`Config not initialized yet, retrying weather fetch in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`);
+        setTimeout(() => {
+          fetchWeather(retryCount + 1, maxRetries, retryDelay);
+        }, retryDelay);
+        return;
+      }
+
+      // Warn if max retries reached with uninitialized config
+      if ((config as any)._initialized === false) {
+        console.warn('Weather: Config initialization timeout - using default values');
+      }
+
       setCity(config.weatherLocation.city);
 
       const response = await fetch(
@@ -31,6 +46,7 @@ export default function Weather() {
         const data = await response.json();
         setWeather(data);
         setError(false);
+        console.log('Weather data loaded successfully for:', config.weatherLocation.city);
       } else {
         setError(true);
       }

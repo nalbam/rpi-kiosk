@@ -240,6 +240,34 @@ export async function initializeConfig(): Promise<void> {
         lon: coordinates.lon,
       };
       console.log('Geolocation detected:', coordinates);
+    } else {
+      // Geolocation failed, try geocoding with city name from timezone
+      try {
+        const city = browserSettings.weatherLocation?.city;
+        if (city) {
+          console.log('Geolocation failed, trying geocoding with city:', city);
+          const response = await fetch(`/api/geocoding?q=${encodeURIComponent(city)}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.results && data.results.length > 0) {
+              const firstResult = data.results[0];
+              browserSettings.weatherLocation = {
+                ...browserSettings.weatherLocation,
+                lat: firstResult.latitude,
+                lon: firstResult.longitude,
+                city: firstResult.name,
+              };
+              console.log('Geocoding successful:', firstResult);
+            } else {
+              console.warn('No geocoding results found for city:', city);
+            }
+          } else {
+            console.warn('Geocoding API request failed:', response.statusText);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to geocode city:', error);
+      }
     }
 
     // Save initial configuration

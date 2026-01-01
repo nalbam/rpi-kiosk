@@ -19,9 +19,24 @@ export default function RSS() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayLimit, setDisplayLimit] = useState(7);
 
-  const fetchRSS = async () => {
+  const fetchRSS = async (retryCount = 0, maxRetries = 10, retryDelay = 500) => {
     try {
       const config = await getConfig();
+
+      // Check if config is not yet initialized (first visit)
+      if ((config as any)._initialized === false && retryCount < maxRetries) {
+        console.log(`Config not initialized yet, retrying RSS fetch in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`);
+        setTimeout(() => {
+          fetchRSS(retryCount + 1, maxRetries, retryDelay);
+        }, retryDelay);
+        return;
+      }
+
+      // Warn if max retries reached with uninitialized config
+      if ((config as any)._initialized === false) {
+        console.warn('RSS: Config initialization timeout - using default values');
+      }
+
       setDisplayLimit(config.displayLimits.rssItems);
 
       if (config.rssFeeds.length === 0) {
@@ -37,6 +52,7 @@ export default function RSS() {
         const data = await response.json();
         setItems(data.items);
         setError(false);
+        console.log('RSS data loaded successfully, feeds:', config.rssFeeds.length);
       } else {
         setError(true);
       }
