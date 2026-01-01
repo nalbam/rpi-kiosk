@@ -2,18 +2,59 @@ import { KioskConfig, defaultConfig } from './config';
 import { API } from './constants';
 
 /**
+ * Default country mapping for languages without country code
+ * Maps language code to its primary country code
+ */
+const LANGUAGE_TO_COUNTRY: { [key: string]: string } = {
+  'en': 'US',
+  'ko': 'KR',
+  'ja': 'JP',
+  'zh': 'CN',
+  'fr': 'FR',
+  'de': 'DE',
+  'es': 'ES',
+  'it': 'IT',
+  'pt': 'BR',
+  'ru': 'RU',
+  'ar': 'SA',
+  'hi': 'IN',
+  'th': 'TH',
+  'vi': 'VN',
+  'id': 'ID',
+  'nl': 'NL',
+  'pl': 'PL',
+  'tr': 'TR',
+  'sv': 'SE',
+  'no': 'NO',
+  'da': 'DK',
+  'fi': 'FI',
+  'cs': 'CZ',
+  'hu': 'HU',
+  'ro': 'RO',
+  'uk': 'UA',
+  'el': 'GR',
+  'he': 'IL',
+};
+
+/**
  * Detect language and country from browser settings
  * Returns language code (e.g., 'en', 'ko', 'ja') and country code (e.g., 'US', 'KR', 'JP')
  */
 function detectLanguageAndCountry(): { language: string; country: string } {
   try {
-    // Get browser language (e.g., "en-US", "ko-KR", "ja-JP")
+    // Get browser language (e.g., "en-US", "ko-KR", "ja-JP", or just "ko")
     const locale = navigator.language || 'en-US';
-    const [language, country] = locale.split('-');
+    const [languageCode, countryCode] = locale.split('-');
+    const language = languageCode.toLowerCase();
+
+    // If country code is not provided, use default mapping
+    const country = countryCode
+      ? countryCode.toUpperCase()
+      : (LANGUAGE_TO_COUNTRY[language] || 'US');
 
     return {
-      language: language.toLowerCase(),
-      country: (country || language).toUpperCase(),
+      language,
+      country,
     };
   } catch (error) {
     console.error('Failed to detect language/country:', error);
