@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { initConfigFromFile } from '@/lib/storage';
 import Clock from '@/components/Clock/Clock';
 import Weather from '@/components/Weather/Weather';
 import Calendar from '@/components/Calendar/Calendar';
@@ -8,6 +10,11 @@ import RSS from '@/components/RSS/RSS';
 
 export default function Home() {
   const router = useRouter();
+
+  // Initialize config from config.json on first load
+  useEffect(() => {
+    initConfigFromFile();
+  }, []);
 
   return (
     <main className="container-fullscreen bg-black text-white">

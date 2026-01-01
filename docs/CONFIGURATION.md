@@ -1,5 +1,33 @@
 # Configuration
 
+## 설정 방법
+
+### 1. 웹 UI (권장)
+브라우저에서 설정 버튼 클릭
+
+### 2. 쉘 스크립트 (config.json)
+
+```bash
+# jq 설치 (필수)
+sudo apt-get install jq
+
+# 설정 파일 초기화
+./scripts/config.sh init
+
+# 값 설정
+./scripts/config.sh set timezone "Asia/Seoul"
+./scripts/config.sh set weatherLocation.lat 37.5665
+./scripts/config.sh set weatherLocation.city "Seoul"
+
+# 값 확인
+./scripts/config.sh get timezone
+
+# 전체 설정
+./scripts/config.sh list
+```
+
+**우선순위**: localStorage > config.json > 기본값
+
 ## 기본 설정
 
 ```json

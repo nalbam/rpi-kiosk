@@ -40,7 +40,34 @@ systemd 서비스만 제거됩니다. 앱 파일과 시스템 패키지는 유�
 
 ## 설정
 
+### 방법 1: 웹 UI (권장)
+
 브라우저에서 `설정` 버튼 클릭하여 변경 가능:
+
+### 방법 2: 설정 파일 (config.json)
+
+쉘 스크립트로 설정 관리:
+
+```bash
+# 설정 파일 생성
+./scripts/config.sh init
+
+# 값 변경
+./scripts/config.sh set timezone "America/New_York"
+./scripts/config.sh set weatherLocation.lat 40.7128
+./scripts/config.sh set weatherLocation.lon -74.0060
+./scripts/config.sh set displayLimits.rssItems 10
+
+# 값 확인
+./scripts/config.sh get timezone
+
+# 전체 설정 보기
+./scripts/config.sh list
+```
+
+**우선순위**: 브라우저 설정 > config.json > 기본값
+
+### 설정 항목
 
 **시간**
 - 타임존 (예: Asia/Seoul)

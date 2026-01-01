@@ -1,0 +1,21 @@
+{
+  "timezone": "Asia/Seoul",
+  "weatherLocation": {
+    "lat": 37.5665,
+    "lon": 126.978,
+    "city": "Seoul"
+  },
+  "calendarUrl": "",
+  "rssFeeds": [
+    "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
+  ],
+  "refreshIntervals": {
+    "weather": 30,
+    "calendar": 15,
+    "rss": 15
+  },
+  "displayLimits": {
+    "calendarEvents": 5,
+    "rssItems": 7
+  }
+}
