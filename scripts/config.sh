@@ -1,24 +1,51 @@
 #!/bin/bash
 
-# Configuration management script for RPI Kiosk
-# Manages config.json file
+# =============================================================================
+# RPI Kiosk - Configuration Management Script
+# =============================================================================
+# This script manages the config.json file
+#
+# Commands:
+#   init          Create config.json from example template
+#   get <key>     Get configuration value
+#   set <key>     Set configuration value
+#   list          List all configuration
+#
+# Examples:
+#   ./scripts/config.sh init
+#   ./scripts/config.sh set timezone "Asia/Seoul"
+#   ./scripts/config.sh set weatherLocation.lat 37.5665
+#   ./scripts/config.sh get timezone
+#   ./scripts/config.sh list
+#
+# Requirements:
+#   jq (install: sudo apt-get install jq)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Configuration
+# -----------------------------------------------------------------------------
 
 CONFIG_FILE="config.json"
 EXAMPLE_FILE="config.json.example"
 
-# Colors
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Get script directory
+# Get script directory and paths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 CONFIG_PATH="$PROJECT_DIR/$CONFIG_FILE"
 EXAMPLE_PATH="$PROJECT_DIR/$EXAMPLE_FILE"
 
-# Initialize config from example if not exists
+# -----------------------------------------------------------------------------
+# Functions
+# -----------------------------------------------------------------------------
+
+# Initialize config from example template
 init_config() {
     if [ -f "$CONFIG_PATH" ]; then
         echo -e "${YELLOW}Config file already exists: $CONFIG_PATH${NC}"
@@ -61,33 +88,33 @@ set_value() {
         init_config
     fi
 
-    # Use jq if available
-    if command -v jq &> /dev/null; then
-        # Create temporary file
-        local tmp_file=$(mktemp)
-
-        # Handle nested keys (e.g., weatherLocation.lat)
-        if [[ $key == *.* ]]; then
-            # Nested key
-            jq ".$key = $value" "$CONFIG_PATH" > "$tmp_file"
-        else
-            # Simple key - check if value is number or string
-            if [[ $value =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
-                # Number
-                jq ".$key = $value" "$CONFIG_PATH" > "$tmp_file"
-            else
-                # String
-                jq ".$key = \"$value\"" "$CONFIG_PATH" > "$tmp_file"
-            fi
-        fi
-
-        mv "$tmp_file" "$CONFIG_PATH"
-        echo -e "${GREEN}Updated $key = $value${NC}"
-    else
+    # Check if jq is available
+    if ! command -v jq &> /dev/null; then
         echo -e "${YELLOW}Warning: jq not installed. Manual edit required.${NC}"
         echo "Please install jq: sudo apt-get install jq"
         exit 1
     fi
+
+    # Create temporary file
+    local tmp_file=$(mktemp)
+
+    # Handle nested keys (e.g., weatherLocation.lat)
+    if [[ $key == *.* ]]; then
+        # Nested key
+        jq ".$key = $value" "$CONFIG_PATH" > "$tmp_file"
+    else
+        # Simple key - check if value is number or string
+        if [[ $value =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+            # Number
+            jq ".$key = $value" "$CONFIG_PATH" > "$tmp_file"
+        else
+            # String
+            jq ".$key = \"$value\"" "$CONFIG_PATH" > "$tmp_file"
+        fi
+    fi
+
+    mv "$tmp_file" "$CONFIG_PATH"
+    echo -e "${GREEN}Updated $key = $value${NC}"
 }
 
 # List all configuration
@@ -104,7 +131,7 @@ list_config() {
     fi
 }
 
-# Show usage
+# Show usage information
 usage() {
     cat << EOF
 Usage: $0 <command> [arguments]
@@ -125,7 +152,7 @@ Examples:
   $0 set displayLimits.rssItems 10
   $0 list
 
-Nested keys:
+Available Configuration Keys:
   timezone
   weatherLocation.lat
   weatherLocation.lon
@@ -137,12 +164,15 @@ Nested keys:
   displayLimits.calendarEvents
   displayLimits.rssItems
 
-Note: Requires jq for JSON manipulation
-      Install: sudo apt-get install jq
+Requirements:
+  jq - Install with: sudo apt-get install jq
 EOF
 }
 
+# -----------------------------------------------------------------------------
 # Main
+# -----------------------------------------------------------------------------
+
 case "$1" in
     init)
         init_config

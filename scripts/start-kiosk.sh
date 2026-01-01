@@ -1,31 +1,67 @@
 #!/bin/bash
 
-# RPI Kiosk Mode Startup Script
-# This script starts the Next.js application and Chromium in kiosk mode
+# =============================================================================
+# RPI Kiosk - Startup Script
+# =============================================================================
+# This script starts the Next.js server and Chromium in kiosk mode
+#
+# What it does:
+#   1. Configures display and disables screensaver
+#   2. Hides mouse cursor
+#   3. Starts Next.js server in background
+#   4. Waits for server to be ready
+#   5. Starts Chromium in kiosk mode
+#
+# Usage:
+#   Called by systemd service (do not run manually)
+# =============================================================================
 
-# Exit on error
-set -e
+set -e  # Exit on any error
 
-# Get the directory where this script is located
+# -----------------------------------------------------------------------------
+# Configuration
+# -----------------------------------------------------------------------------
+
+# Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_DIR="$(dirname "$SCRIPT_DIR")"
 
-# Set display
+# Set display environment
 export DISPLAY=:0
 export XAUTHORITY=${XAUTHORITY:-$HOME/.Xauthority}
+
+# -----------------------------------------------------------------------------
+# Functions
+# -----------------------------------------------------------------------------
+
+# Cleanup function - stops server on exit
+cleanup() {
+    echo "Stopping server (PID: $SERVER_PID)..."
+    kill $SERVER_PID 2>/dev/null || true
+    exit 0
+}
+
+# -----------------------------------------------------------------------------
+# Main Startup
+# -----------------------------------------------------------------------------
 
 echo "Starting RPI Kiosk..."
 echo "App directory: $APP_DIR"
 
-# Disable screensaver
+# Step 1: Configure display
+echo "Configuring display..."
+
+# Disable screensaver and blanking
 xset s off
 xset -dpms
 xset s noblank
 
-# Hide cursor
+# Hide mouse cursor
 unclutter -idle 0.5 -root &
 
-# Detect which chromium command to use
+# Step 2: Detect Chromium command
+echo "Detecting Chromium installation..."
+
 if command -v chromium-browser &> /dev/null; then
     CHROMIUM_CMD="chromium-browser"
     CHROMIUM_CONFIG_DIR="$HOME/.config/chromium"
@@ -39,29 +75,27 @@ fi
 
 echo "Using browser: $CHROMIUM_CMD"
 
-# Remove previous session (fix crash warnings)
+# Step 3: Fix Chromium crash warnings
+echo "Fixing previous session state..."
+
 if [ -f "$CHROMIUM_CONFIG_DIR/Default/Preferences" ]; then
     sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
     sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
 fi
 
-# Start Next.js application in background
-cd "$APP_DIR"
+# Step 4: Start Next.js server
 echo "Starting Next.js server..."
+
+cd "$APP_DIR"
 NODE_ENV=production npm start &
 SERVER_PID=$!
 
-# Function to cleanup on exit
-cleanup() {
-    echo "Stopping server (PID: $SERVER_PID)..."
-    kill $SERVER_PID 2>/dev/null || true
-    exit 0
-}
-
+# Register cleanup handler
 trap cleanup SIGTERM SIGINT
 
-# Wait for the server to be ready
+# Step 5: Wait for server to be ready
 echo "Waiting for server to be ready..."
+
 for i in {1..30}; do
     if curl -s http://localhost:3000 > /dev/null 2>&1; then
         echo "Server is ready!"
@@ -75,8 +109,9 @@ for i in {1..30}; do
     sleep 1
 done
 
-# Start Chromium in kiosk mode (foreground)
+# Step 6: Start Chromium in kiosk mode
 echo "Starting Chromium in kiosk mode..."
+
 $CHROMIUM_CMD \
   --noerrdialogs \
   --disable-infobars \

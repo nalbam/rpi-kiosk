@@ -1,16 +1,36 @@
 #!/bin/bash
 
-# Uninstall script for RPI Kiosk
-# This script removes the systemd service and optionally the application
+# =============================================================================
+# RPI Kiosk - Uninstallation Script
+# =============================================================================
+# This script removes the systemd service
+#
+# What it does:
+#   1. Stops the rpi-kiosk service
+#   2. Disables the service
+#   3. Removes the service file
+#   4. Reloads systemd daemon
+#
+# What it does NOT do:
+#   - Remove application files
+#   - Remove system packages (chromium, Node.js, etc.)
+#
+# Usage:
+#   ./scripts/uninstall.sh
+# =============================================================================
 
-set -e  # Exit on error
+# Note: Do not use 'set -e' here - we want to continue even if some steps fail
+
+# -----------------------------------------------------------------------------
+# Main Uninstallation
+# -----------------------------------------------------------------------------
 
 echo "========================================="
 echo "RPI Kiosk Uninstallation"
 echo "========================================="
 echo ""
 
-# Stop service
+# Step 1: Stop service
 echo "[1/4] Stopping service..."
 if systemctl is-active --quiet rpi-kiosk.service; then
     sudo systemctl stop rpi-kiosk.service
@@ -19,7 +39,7 @@ else
     echo "  - Service is not running"
 fi
 
-# Disable service
+# Step 2: Disable service
 echo "[2/4] Disabling service..."
 if systemctl is-enabled --quiet rpi-kiosk.service 2>/dev/null; then
     sudo systemctl disable rpi-kiosk.service
@@ -28,7 +48,7 @@ else
     echo "  - Service is not enabled"
 fi
 
-# Remove service file
+# Step 3: Remove service file
 echo "[3/4] Removing service file..."
 if [ -f /etc/systemd/system/rpi-kiosk.service ]; then
     sudo rm /etc/systemd/system/rpi-kiosk.service
@@ -37,14 +57,18 @@ else
     echo "  - Service file not found"
 fi
 
-# Reload systemd
+# Step 4: Reload systemd daemon
+echo "[4/4] Reloading systemd daemon..."
 sudo systemctl daemon-reload
 sudo systemctl reset-failed
 
-echo "[4/4] Cleanup complete"
+# -----------------------------------------------------------------------------
+# Uninstallation Complete
+# -----------------------------------------------------------------------------
+
 echo ""
 echo "========================================="
-echo "Uninstallation complete!"
+echo "Uninstallation Complete!"
 echo "========================================="
 echo ""
 echo "Service removed: rpi-kiosk.service"

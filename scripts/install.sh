@@ -1,46 +1,67 @@
 #!/bin/bash
 
-# Install script for RPI Kiosk
-# Run this script on your Raspberry Pi to set up the kiosk
+# =============================================================================
+# RPI Kiosk - Installation Script
+# =============================================================================
+# This script installs and configures the RPI Kiosk on Raspberry Pi
+#
+# What it does:
+#   1. Updates system packages
+#   2. Installs required dependencies (Chromium, Node.js, etc.)
+#   3. Pulls latest code from git
+#   4. Installs npm dependencies and builds the application
+#   5. Creates and starts systemd service
+#
+# Usage:
+#   ./scripts/install.sh
+# =============================================================================
 
-set -e  # Exit on error
+set -e  # Exit on any error
+
+# -----------------------------------------------------------------------------
+# Configuration
+# -----------------------------------------------------------------------------
+
+INSTALL_USER=${SUDO_USER:-$USER}
+INSTALL_HOME=$(eval echo ~$INSTALL_USER)
+INSTALL_DIR="$INSTALL_HOME/rpi-kiosk"
+
+# -----------------------------------------------------------------------------
+# Main Installation
+# -----------------------------------------------------------------------------
 
 echo "========================================="
 echo "RPI Kiosk Installation"
 echo "========================================="
 echo ""
-
-# Get the current user and home directory
-INSTALL_USER=${SUDO_USER:-$USER}
-INSTALL_HOME=$(eval echo ~$INSTALL_USER)
-INSTALL_DIR="$INSTALL_HOME/rpi-kiosk"
-
 echo "Installation settings:"
 echo "  User: $INSTALL_USER"
 echo "  Home: $INSTALL_HOME"
-echo "  Install directory: $INSTALL_DIR"
+echo "  Directory: $INSTALL_DIR"
 echo ""
 
-# Update system
+# Step 1: Update system packages
 echo "[1/6] Updating system packages..."
 sudo apt-get update
 
-# Install required packages
+# Step 2: Install system dependencies
 echo "[2/6] Installing system dependencies..."
-# Try chromium first (newer Debian/Raspberry Pi OS), fall back to chromium-browser
+
+# Detect Chromium package name (chromium vs chromium-browser)
 if apt-cache show chromium &> /dev/null; then
-    echo "  - Installing chromium (newer package name)..."
+    echo "  - Installing chromium (newer package name)"
     sudo apt-get install -y chromium unclutter xdotool curl
 elif apt-cache show chromium-browser &> /dev/null; then
-    echo "  - Installing chromium-browser (legacy package name)..."
+    echo "  - Installing chromium-browser (legacy package name)"
     sudo apt-get install -y chromium-browser unclutter xdotool curl
 else
-    echo "Error: Neither chromium nor chromium-browser package found"
+    echo "  - Error: Neither chromium nor chromium-browser package found"
     exit 1
 fi
 
-# Install Node.js (if not already installed)
+# Step 3: Install Node.js
 echo "[3/6] Checking Node.js installation..."
+
 if ! command -v node &> /dev/null; then
     echo "  - Installing Node.js 22 LTS..."
     curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
@@ -50,27 +71,29 @@ else
     echo "  - Node.js already installed: $NODE_VERSION"
 fi
 
-# Install application dependencies
-echo "[4/6] Installing npm dependencies..."
+# Step 4: Install application dependencies
+echo "[4/6] Installing application dependencies..."
 cd "$INSTALL_DIR"
 
-# Pull latest changes
+# Pull latest code from git
 echo "  - Pulling latest code from git..."
 git pull || echo "  - Warning: git pull failed (may not be a git repository)"
 
+# Install npm packages
+echo "  - Installing npm packages..."
 npm install --legacy-peer-deps
 
-# Build the application
+# Step 5: Build application
 echo "[5/6] Building application..."
 npm run build
 
-# Install systemd service
+# Step 6: Install systemd service
 echo "[6/6] Installing systemd service..."
 
-# Make scripts executable
+# Make start script executable
 chmod +x scripts/start-kiosk.sh
 
-# Create service file with correct paths
+# Create systemd service file
 echo "  - Creating rpi-kiosk.service..."
 sudo tee /etc/systemd/system/rpi-kiosk.service > /dev/null <<EOF
 [Unit]
@@ -94,32 +117,34 @@ TimeoutStopSec=30
 WantedBy=graphical.target
 EOF
 
-# Reload systemd
+# Reload and start service
 echo "  - Reloading systemd daemon..."
 sudo systemctl daemon-reload
 
-# Enable service
 echo "  - Enabling service..."
 sudo systemctl enable rpi-kiosk.service
 
-# Start service
 echo "  - Starting service..."
 sudo systemctl start rpi-kiosk.service
 
+# -----------------------------------------------------------------------------
+# Installation Complete
+# -----------------------------------------------------------------------------
+
 echo ""
 echo "========================================="
-echo "Installation complete!"
+echo "Installation Complete!"
 echo "========================================="
 echo ""
 echo "Service installed and started:"
-echo "  - rpi-kiosk.service (Next.js server + Chromium kiosk)"
+echo "  - rpi-kiosk.service"
 echo ""
 echo "Useful commands:"
 echo "  - Check status:  sudo systemctl status rpi-kiosk"
 echo "  - View logs:     sudo journalctl -u rpi-kiosk -f"
 echo "  - Restart:       sudo systemctl restart rpi-kiosk"
 echo "  - Stop:          sudo systemctl stop rpi-kiosk"
-echo "  - Disable:       sudo systemctl disable rpi-kiosk"
 echo ""
-echo "To uninstall, run: ./scripts/uninstall.sh"
+echo "To uninstall:"
+echo "  ./scripts/uninstall.sh"
 echo ""
