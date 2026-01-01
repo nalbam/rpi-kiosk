@@ -32,7 +32,7 @@ export const DATE_FORMAT_OPTIONS = [
 ] as const;
 
 export const defaultConfig: KioskConfig = {
-  timezone: 'Asia/Seoul',
+  timezone: 'America/Los_Angeles',
   dateFormat: 'EEEE, MMMM dd, yyyy',
   weatherLocation: {
     lat: 37.5665,
@@ -40,7 +40,7 @@ export const defaultConfig: KioskConfig = {
     city: 'Seoul'
   },
   rssFeeds: [
-    'https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko',
+    'https://news.google.com/rss?hl=en&gl=US&ceid=US:en',
   ],
   refreshIntervals: {
     weather: 30,

@@ -1,16 +1,16 @@
 {
   "_comment": "Example configuration file for RPI Kiosk",
   "_note": "On first visit, the application will auto-detect timezone, city, and coordinates from browser. You can customize these values manually.",
-  "timezone": "Asia/Seoul",
+  "timezone": "America/Los_Angeles",
   "dateFormat": "EEEE, MMMM dd, yyyy",
   "weatherLocation": {
-    "lat": 37.5665,
-    "lon": 126.9780,
-    "city": "Seoul"
+    "lat": 34.04657,
+    "lon": -118.26713,
+    "city": "Los Angeles"
   },
   "calendarUrl": "",
   "rssFeeds": [
-    "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
+    "https://news.google.com/rss?hl=en&gl=US&ceid=US:en"
   ],
   "refreshIntervals": {
     "weather": 30,
