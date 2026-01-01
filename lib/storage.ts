@@ -1,4 +1,5 @@
 import { KioskConfig, defaultConfig } from './config';
+import { API } from './constants';
 
 const CONFIG_KEY = 'kiosk-config';
 const CONFIG_INITIALIZED_KEY = 'kiosk-config-initialized';
@@ -52,7 +53,7 @@ async function detectGeolocation(): Promise<{ lat: number; lon: number } | null>
         resolve(null);
       },
       {
-        timeout: 10000,
+        timeout: API.TIMEOUT_MS,
         maximumAge: 0,
       }
     );

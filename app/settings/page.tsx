@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getConfig, saveConfig, resetConfig, reloadConfigFromFile } from '@/lib/storage';
 import { KioskConfig, DATE_FORMAT_OPTIONS } from '@/lib/config';
+import { API } from '@/lib/constants';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -154,7 +155,7 @@ export default function SettingsPage() {
         alert(`Failed to detect location: ${error.message}`);
       },
       {
-        timeout: 10000,
+        timeout: API.TIMEOUT_MS,
         maximumAge: 0,
       }
     );

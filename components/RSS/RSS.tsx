@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { getConfig } from '@/lib/storage';
+import { PROCESSING_LIMITS } from '@/lib/constants';
 
 interface RSSItem {
   title: string;
@@ -60,7 +61,7 @@ export default function RSS() {
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % items.length);
-    }, 10000); // 10 seconds - matches PROCESSING_LIMITS.RSS_CAROUSEL_INTERVAL_MS
+    }, PROCESSING_LIMITS.RSS_CAROUSEL_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [items.length]);
