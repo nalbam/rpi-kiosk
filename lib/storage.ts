@@ -167,6 +167,47 @@ export async function detectGeolocation(): Promise<{ lat: number; lon: number } 
 }
 
 /**
+ * Detect location using IP address (fallback for when geolocation fails)
+ * Uses ipapi.co service (free, no API key required)
+ */
+export async function detectLocationByIP(): Promise<{ lat: number; lon: number; city: string } | null> {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  try {
+    console.log('Attempting IP-based location detection...');
+    const response = await fetch('https://ipapi.co/json/', {
+      signal: AbortSignal.timeout(API.TIMEOUT_MS),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+
+      // Validate response data
+      if (data.latitude && data.longitude && data.city) {
+        const result = {
+          lat: data.latitude,
+          lon: data.longitude,
+          city: data.city,
+        };
+        console.log('IP-based location detected:', result);
+        return result;
+      } else {
+        console.warn('IP-based location data incomplete:', data);
+        return null;
+      }
+    } else {
+      console.warn('IP-based location API returned error:', response.status);
+      return null;
+    }
+  } catch (error) {
+    console.error('IP-based location detection failed:', error);
+    return null;
+  }
+}
+
+/**
  * Get configuration from server (config.json)
  */
 export async function getConfig(): Promise<KioskConfig> {
@@ -246,7 +287,7 @@ export async function initializeConfig(): Promise<void> {
     const browserSettings = detectBrowserSettings();
     console.log('Browser settings detected:', browserSettings);
 
-    // Try to detect geolocation
+    // Try to detect geolocation (GPS/WiFi-based)
     const coordinates = await detectGeolocation();
     if (coordinates) {
       browserSettings.weatherLocation = {
@@ -257,32 +298,45 @@ export async function initializeConfig(): Promise<void> {
       };
       console.log('Geolocation detected:', coordinates);
     } else {
-      // Geolocation failed, try geocoding with city name from timezone
-      try {
-        const city = browserSettings.weatherLocation?.city;
-        if (city) {
-          console.log('Geolocation failed, trying geocoding with city:', city);
-          const response = await fetch(`/api/geocoding?q=${encodeURIComponent(city)}`);
-          if (response.ok) {
-            const data = await response.json();
-            if (data.results && data.results.length > 0) {
-              const firstResult = data.results[0];
-              browserSettings.weatherLocation = {
-                ...browserSettings.weatherLocation,
-                lat: firstResult.latitude,
-                lon: firstResult.longitude,
-                city: firstResult.name,
-              };
-              console.log('Geocoding successful:', firstResult);
+      // Geolocation failed, try IP-based location detection
+      const ipLocation = await detectLocationByIP();
+      if (ipLocation) {
+        browserSettings.weatherLocation = {
+          ...defaultConfig.weatherLocation,
+          ...browserSettings.weatherLocation,
+          lat: ipLocation.lat,
+          lon: ipLocation.lon,
+          city: ipLocation.city,
+        };
+        console.log('IP-based location successful:', ipLocation);
+      } else {
+        // IP-based location also failed, try geocoding with city name from timezone
+        try {
+          const city = browserSettings.weatherLocation?.city;
+          if (city) {
+            console.log('IP-based location failed, trying geocoding with city:', city);
+            const response = await fetch(`/api/geocoding?q=${encodeURIComponent(city)}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data.results && data.results.length > 0) {
+                const firstResult = data.results[0];
+                browserSettings.weatherLocation = {
+                  ...browserSettings.weatherLocation,
+                  lat: firstResult.latitude,
+                  lon: firstResult.longitude,
+                  city: firstResult.name,
+                };
+                console.log('Geocoding successful:', firstResult);
+              } else {
+                console.warn('No geocoding results found for city:', city);
+              }
             } else {
-              console.warn('No geocoding results found for city:', city);
+              console.warn('Geocoding API request failed:', response.statusText);
             }
-          } else {
-            console.warn('Geocoding API request failed:', response.statusText);
           }
+        } catch (error) {
+          console.error('Failed to geocode city:', error);
         }
-      } catch (error) {
-        console.error('Failed to geocode city:', error);
       }
     }
 
