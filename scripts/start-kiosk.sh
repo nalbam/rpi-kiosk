@@ -14,9 +14,23 @@ xset s noblank
 # Hide cursor
 unclutter -idle 0.5 -root &
 
-# Remove previous session
-sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' ~/.config/chromium/Default/Preferences
-sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' ~/.config/chromium/Default/Preferences
+# Detect which chromium command to use
+if command -v chromium-browser &> /dev/null; then
+    CHROMIUM_CMD="chromium-browser"
+    CHROMIUM_CONFIG_DIR="$HOME/.config/chromium"
+elif command -v chromium &> /dev/null; then
+    CHROMIUM_CMD="chromium"
+    CHROMIUM_CONFIG_DIR="$HOME/.config/chromium"
+else
+    echo "Error: Neither chromium nor chromium-browser found"
+    exit 1
+fi
+
+# Remove previous session (fix crash warnings)
+if [ -f "$CHROMIUM_CONFIG_DIR/Default/Preferences" ]; then
+    sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
+    sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
+fi
 
 # Start Next.js application in development mode (change to production as needed)
 cd /home/pi/rpi-kiosk
@@ -27,7 +41,7 @@ npm start &
 sleep 10
 
 # Start Chromium in kiosk mode
-chromium-browser \
+$CHROMIUM_CMD \
   --noerrdialogs \
   --disable-infobars \
   --kiosk \
