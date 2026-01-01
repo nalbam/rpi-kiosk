@@ -110,10 +110,10 @@ The settings page provides a dropdown with **all IANA timezones** (600+), groupe
 - UTC and others
 
 **Examples**:
+- `America/Los_Angeles` - US Pacific
+- `America/New_York` - US Eastern
 - `Asia/Seoul` - Korea
 - `Asia/Tokyo` - Japan
-- `America/New_York` - US Eastern
-- `America/Los_Angeles` - US Pacific
 - `Europe/London` - UK
 
 The dropdown automatically loads all available timezones using `Intl.supportedValuesOf('timeZone')`.
@@ -157,8 +157,8 @@ Choose from these formats in settings:
 - Reuters: `https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best`
 
 **Regional**
-- Google News (Korea): `https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko`
 - Google News (US): `https://news.google.com/rss?hl=en&gl=US&ceid=US:en`
+- Google News (Korea): `https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko`
 
 ## Refresh Intervals (minutes)
 
