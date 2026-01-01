@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { format, isSameDay, isToday, isTomorrow } from 'date-fns';
 import { getConfig } from '@/lib/storage';
+import { MapPin } from 'lucide-react';
 
 interface CalendarEvent {
   title: string;
@@ -166,7 +167,10 @@ export default function Calendar() {
                 {timeDisplay}
               </div>
               {event.location && (
-                <div className="text-vw-xs text-gray-500 mt-vw-xs">📍 {event.location}</div>
+                <div className="text-vw-xs text-gray-500 mt-vw-xs flex items-center gap-1">
+                  <MapPin size={12} className="flex-shrink-0" />
+                  <span>{event.location}</span>
+                </div>
               )}
             </div>
           );

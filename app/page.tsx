@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { initializeConfig } from '@/lib/storage';
+import { Settings } from 'lucide-react';
 import Clock from '@/components/Clock/Clock';
 import Weather from '@/components/Weather/Weather';
 import Calendar from '@/components/Calendar/Calendar';
@@ -23,9 +24,10 @@ export default function Home() {
         <div className="flex justify-end mb-vw-xs flex-shrink-0">
           <button
             onClick={() => router.push('/settings')}
-            className="px-vw-sm py-vw-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-vw-xs"
+            className="px-vw-sm py-vw-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-vw-xs flex items-center gap-2"
           >
-            ⚙️ Settings
+            <Settings size={16} />
+            <span>Settings</span>
           </button>
         </div>
 
