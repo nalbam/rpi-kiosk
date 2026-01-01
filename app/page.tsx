@@ -82,7 +82,6 @@ export default function Home() {
             className="px-vw-sm py-vw-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-vw-xs flex items-center gap-2"
           >
             <Settings size={16} />
-            <span>Settings</span>
           </button>
         </div>
 
