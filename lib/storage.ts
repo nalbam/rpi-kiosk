@@ -6,29 +6,52 @@ const CONFIG_INITIALIZED_KEY = 'kiosk-config-initialized';
 
 /**
  * Detect timezone and city from browser settings
+ * CRITICAL: This function must ALWAYS return at least the timezone
+ * Never return an empty object as it would cause defaults to be used
  */
 function detectBrowserSettings(): Partial<KioskConfig> {
-  try {
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  let timezone: string;
+  let city: string = defaultConfig.weatherLocation.city;
 
-    // Extract city from timezone (e.g., "America/New_York" -> "New York")
-    let city = defaultConfig.weatherLocation.city;
+  // Timezone detection - this should never fail in modern browsers
+  try {
+    timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    console.log('Browser timezone detected:', timezone);
+  } catch (error) {
+    console.error('Failed to detect browser timezone:', error);
+    // Fallback: try to detect from Date
+    try {
+      const offset = -new Date().getTimezoneOffset();
+      timezone = `UTC${offset >= 0 ? '+' : ''}${offset / 60}`;
+      console.log('Using timezone offset fallback:', timezone);
+    } catch {
+      // Last resort: use UTC
+      timezone = 'UTC';
+      console.warn('Using UTC as final fallback');
+    }
+  }
+
+  // City extraction - this can fail safely
+  try {
     if (timezone.includes('/')) {
       const parts = timezone.split('/');
       city = parts[parts.length - 1].replace(/_/g, ' ');
     }
-
-    return {
-      timezone,
-      weatherLocation: {
-        ...defaultConfig.weatherLocation,
-        city,
-      },
-    };
   } catch (error) {
-    console.error('Failed to detect browser settings:', error);
-    return {};
+    console.error('Failed to extract city from timezone:', error);
+    // city remains as defaultConfig.weatherLocation.city
   }
+
+  const result = {
+    timezone,
+    weatherLocation: {
+      ...defaultConfig.weatherLocation,
+      city,
+    },
+  };
+
+  console.log('Browser settings detected:', result);
+  return result;
 }
 
 /**
@@ -125,6 +148,7 @@ export async function initConfigFromFile(): Promise<void> {
 
   // Detect browser settings (timezone and city)
   const browserSettings = detectBrowserSettings();
+  console.log('[initConfigFromFile] Browser settings:', browserSettings);
 
   // Try to detect geolocation coordinates
   const coordinates = await detectGeolocation();
@@ -135,13 +159,14 @@ export async function initConfigFromFile(): Promise<void> {
       lat: coordinates.lat,
       lon: coordinates.lon,
     };
-    console.log('Geolocation detected:', coordinates);
+    console.log('[initConfigFromFile] Geolocation detected:', coordinates);
   }
 
   try {
     const response = await fetch('/api/config');
     if (response.ok) {
       const fileConfig = await response.json();
+      console.log('[initConfigFromFile] Fetched config.json:', fileConfig);
 
       // Smart merge: Only use fileConfig values if they differ from defaults
       // This allows browser-detected settings to take precedence over default values in config.json
@@ -150,6 +175,14 @@ export async function initConfigFromFile(): Promise<void> {
       const timezone = fileConfig.timezone !== defaultConfig.timezone
         ? fileConfig.timezone
         : (browserSettings.timezone || defaultConfig.timezone);
+
+      console.log('[initConfigFromFile] Timezone merge:', {
+        fileConfig: fileConfig.timezone,
+        default: defaultConfig.timezone,
+        browser: browserSettings.timezone,
+        result: timezone,
+        usedBrowser: timezone === browserSettings.timezone,
+      });
 
       // Use fileConfig city only if it's different from default
       const city = fileConfig.weatherLocation?.city !== defaultConfig.weatherLocation.city
@@ -178,10 +211,12 @@ export async function initConfigFromFile(): Promise<void> {
         },
       };
 
+      console.log('[initConfigFromFile] Final merged config:', mergedConfig);
+
       // Save merged config as initial localStorage config
       localStorage.setItem(CONFIG_KEY, JSON.stringify(mergedConfig));
       localStorage.setItem(CONFIG_INITIALIZED_KEY, 'true');
-      console.log('Configuration initialized from browser settings and config.json');
+      console.log('[initConfigFromFile] Configuration initialized from browser settings and config.json');
     } else {
       // If no config.json, use browser-detected settings
       const initialConfig = {
