@@ -6,7 +6,7 @@ import { getConfig, saveConfig, detectBrowserSettings, detectGeolocation } from 
 import { KioskConfig, DATE_FORMAT_OPTIONS, defaultConfig } from '@/lib/config';
 import { API } from '@/lib/constants';
 import { GeocodingResult } from '@/app/api/geocoding/route';
-import { Search, MapPin, Clock, Sparkles, Map, Navigation } from 'lucide-react';
+import { Search, MapPin, Clock, Sparkles, Map, Navigation, XCircle, X } from 'lucide-react';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -21,6 +21,7 @@ export default function SettingsPage() {
   const [citySearchResults, setCitySearchResults] = useState<GeocodingResult[]>([]);
   const [searchingCity, setSearchingCity] = useState(false);
   const [timezoneFilter, setTimezoneFilter] = useState('');
+  const [errorToast, setErrorToast] = useState<string | null>(null);
 
   // Load configuration from server
   useEffect(() => {
@@ -111,14 +112,23 @@ export default function SettingsPage() {
     };
   }, []);
 
+  // Auto-hide error toast after 5 seconds
+  useEffect(() => {
+    if (errorToast) {
+      const timer = setTimeout(() => {
+        setErrorToast(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorToast]);
+
   const handleSave = async () => {
     if (config) {
       const result = await saveConfig(config);
       if (result.success) {
-        alert('Settings saved successfully');
-        router.push('/');
+        router.push('/?message=saved');
       } else {
-        alert(`Failed to save settings: ${result.error}`);
+        setErrorToast(result.error || 'Failed to save settings');
       }
     }
   };
@@ -127,10 +137,9 @@ export default function SettingsPage() {
     if (confirm('Are you sure you want to reset all settings to default values?')) {
       const result = await saveConfig(defaultConfig);
       if (result.success) {
-        setConfig(defaultConfig);
-        alert('Settings have been reset to default values');
+        router.push('/?message=reset');
       } else {
-        alert(`Failed to reset settings: ${result.error}`);
+        setErrorToast(result.error || 'Failed to reset settings');
       }
     }
   };
@@ -345,6 +354,22 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8 overflow-x-hidden">
+      {/* Error Toast */}
+      {errorToast && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-3 px-6 py-3 rounded-lg shadow-lg border bg-red-600 border-red-500">
+            <XCircle className="w-5 h-5 flex-shrink-0" />
+            <span className="font-medium">{errorToast}</span>
+            <button
+              onClick={() => setErrorToast(null)}
+              className="ml-2 hover:bg-white/20 rounded p-1 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-4xl mx-auto w-full">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold">Settings</h1>
@@ -775,7 +800,7 @@ export default function SettingsPage() {
               onClick={handleSave}
               className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-base sm:text-lg font-semibold transition-colors"
             >
-              Save to Server
+              Save
             </button>
             <button
               onClick={handleReset}
