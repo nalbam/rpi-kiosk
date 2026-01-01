@@ -98,19 +98,21 @@ set_value() {
     # Create temporary file
     local tmp_file=$(mktemp)
 
-    # Handle nested keys (e.g., weatherLocation.lat)
-    if [[ $key == *.* ]]; then
-        # Nested key
-        jq ".$key = $value" "$CONFIG_PATH" > "$tmp_file"
+    # Check if value is number or string
+    if [[ $value =~ ^-?[0-9]+(\.[0-9]+)?$ ]]; then
+        # Number (including negative numbers)
+        jq ".$key = $value" "$CONFIG_PATH" > "$tmp_file" 2>&1
     else
-        # Simple key - check if value is number or string
-        if [[ $value =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
-            # Number
-            jq ".$key = $value" "$CONFIG_PATH" > "$tmp_file"
-        else
-            # String
-            jq ".$key = \"$value\"" "$CONFIG_PATH" > "$tmp_file"
-        fi
+        # String - add quotes
+        jq ".$key = \"$value\"" "$CONFIG_PATH" > "$tmp_file" 2>&1
+    fi
+
+    # Check if jq command succeeded
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: Failed to update config${NC}"
+        cat "$tmp_file"
+        rm "$tmp_file"
+        exit 1
     fi
 
     mv "$tmp_file" "$CONFIG_PATH"
