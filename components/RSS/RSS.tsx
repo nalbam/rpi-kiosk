@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale/ko';
 import { getConfig } from '@/lib/storage';
 
 interface RSSItem {
@@ -69,8 +68,8 @@ export default function RSS() {
   if (loading) {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">뉴스</h2>
-        <div className="text-gray-400 text-vw-sm">뉴스 로딩 중...</div>
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">News</h2>
+        <div className="text-gray-400 text-vw-sm">Loading news...</div>
       </div>
     );
   }
@@ -78,8 +77,8 @@ export default function RSS() {
   if (error) {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">뉴스</h2>
-        <div className="text-gray-400 text-vw-sm">뉴스를 가져올 수 없습니다</div>
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">News</h2>
+        <div className="text-gray-400 text-vw-sm">Unable to fetch news</div>
       </div>
     );
   }
@@ -87,9 +86,9 @@ export default function RSS() {
   if (items.length === 0) {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">뉴스</h2>
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">News</h2>
         <div className="text-gray-400 text-vw-sm">
-          {getConfig().rssFeeds.length === 0 ? '설정에서 RSS 피드를 추가하세요' : '뉴스 아이템이 없습니다'}
+          {getConfig().rssFeeds.length === 0 ? 'Add RSS feeds in settings' : 'No news items'}
         </div>
       </div>
     );
@@ -104,7 +103,7 @@ export default function RSS() {
 
   return (
     <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-      <h2 className="text-vw-xl font-semibold mb-vw-sm">뉴스</h2>
+      <h2 className="text-vw-xl font-semibold mb-vw-sm">News</h2>
       <div className="space-y-vw-sm overflow-y-auto flex-1 min-h-0">
         {displayItems.map((item) => (
           <div key={item.link} className="border-b border-gray-700 pb-vw-xs last:border-b-0">
@@ -121,7 +120,6 @@ export default function RSS() {
               <span>
                 {formatDistanceToNow(new Date(item.pubDate), {
                   addSuffix: true,
-                  locale: ko,
                 })}
               </span>
             </div>

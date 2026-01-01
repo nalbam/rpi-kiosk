@@ -72,16 +72,16 @@ export default function Calendar() {
 
   const getDateLabel = (dateStr: string) => {
     const date = new Date(dateStr);
-    if (isToday(date)) return '오늘';
-    if (isTomorrow(date)) return '내일';
-    return format(date, 'MM월 dd일');
+    if (isToday(date)) return 'Today';
+    if (isTomorrow(date)) return 'Tomorrow';
+    return format(date, 'MMM dd');
   };
 
   if (loading) {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">일정</h2>
-        <div className="text-gray-400 text-vw-sm">일정 로딩 중...</div>
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">Calendar</h2>
+        <div className="text-gray-400 text-vw-sm">Loading events...</div>
       </div>
     );
   }
@@ -89,8 +89,8 @@ export default function Calendar() {
   if (error) {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">일정</h2>
-        <div className="text-gray-400 text-vw-sm">일정을 가져올 수 없습니다</div>
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">Calendar</h2>
+        <div className="text-gray-400 text-vw-sm">Unable to fetch events</div>
       </div>
     );
   }
@@ -98,9 +98,9 @@ export default function Calendar() {
   if (events.length === 0) {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">일정</h2>
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">Calendar</h2>
         <div className="text-gray-400 text-vw-sm">
-          {getConfig().calendarUrl ? '예정된 일정이 없습니다' : '설정에서 캘린더 URL을 추가하세요'}
+          {getConfig().calendarUrl ? 'No upcoming events' : 'Add calendar URL in settings'}
         </div>
       </div>
     );
@@ -112,7 +112,7 @@ export default function Calendar() {
 
   return (
     <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-      <h2 className="text-vw-xl font-semibold mb-vw-sm">일정</h2>
+      <h2 className="text-vw-xl font-semibold mb-vw-sm">Calendar</h2>
       <div className="space-y-vw-xs overflow-y-auto flex-1 min-h-0">
         {displayEvents.map((event, index) => {
           const startDate = new Date(event.start);
@@ -134,10 +134,10 @@ export default function Calendar() {
           if (isAllDayEvent) {
             if (daysDiff === 1) {
               // Single day all-day event
-              timeDisplay = '종일';
+              timeDisplay = 'All day';
             } else {
               // Multi-day all-day event
-              timeDisplay = `${format(startDate, 'MM/dd')} - ${format(new Date(endDate.getTime() - 1), 'MM/dd')} (${daysDiff}일간)`;
+              timeDisplay = `${format(startDate, 'MM/dd')} - ${format(new Date(endDate.getTime() - 1), 'MM/dd')} (${daysDiff} days)`;
             }
           } else {
             // Regular timed event

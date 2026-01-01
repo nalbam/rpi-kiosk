@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getConfig, saveConfig, resetConfig, reloadConfigFromFile } from '@/lib/storage';
-import { KioskConfig } from '@/lib/config';
+import { KioskConfig, DATE_FORMAT_OPTIONS } from '@/lib/config';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -34,32 +34,32 @@ export default function SettingsPage() {
     if (config) {
       const result = saveConfig(config);
       if (result.success) {
-        alert('설정이 저장되었습니다');
+        alert('Settings saved successfully');
         router.push('/');
       } else {
-        alert(`설정 저장 실패: ${result.error}`);
+        alert(`Failed to save settings: ${result.error}`);
       }
     }
   };
 
   const handleReset = () => {
-    if (confirm('모든 설정을 초기화하시겠습니까?')) {
+    if (confirm('Are you sure you want to reset all settings?')) {
       resetConfig();
       const defaultConfig = getConfig();
       setConfig(defaultConfig);
-      alert('설정이 초기화되었습니다');
+      alert('Settings have been reset');
     }
   };
 
   const handleReloadFromFile = async () => {
-    if (confirm('서버의 config.json 파일에서 설정을 다시 불러오시겠습니까?\n현재 변경사항은 덮어씌워집니다.')) {
+    if (confirm('Do you want to reload settings from config.json on the server?\nCurrent changes will be overwritten.')) {
       const result = await reloadConfigFromFile();
       if (result.success) {
         const reloadedConfig = getConfig();
         setConfig(reloadedConfig);
-        alert('서버 설정을 다시 불러왔습니다');
+        alert('Settings reloaded from server');
       } else {
-        alert(`설정 불러오기 실패: ${result.error}`);
+        alert(`Failed to reload settings: ${result.error}`);
       }
     }
   };
@@ -86,7 +86,7 @@ export default function SettingsPage() {
   if (!config) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div>로딩 중...</div>
+        <div>Loading...</div>
       </div>
     );
   }
@@ -95,23 +95,23 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-black text-white p-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold">설정</h1>
+          <h1 className="text-4xl font-bold">Settings</h1>
           <button
             onClick={() => router.push('/')}
             className="px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
           >
-            메인으로
+            Back to Home
           </button>
         </div>
 
         <div className="space-y-6">
           {/* Time Settings */}
           <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-            <h2 className="text-2xl font-semibold mb-4">시간 설정</h2>
-            
+            <h2 className="text-2xl font-semibold mb-4">Time Settings</h2>
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">타임존</label>
+                <label className="block text-sm font-medium mb-2">Timezone</label>
                 <input
                   type="text"
                   value={config.timezone}
@@ -120,12 +120,30 @@ export default function SettingsPage() {
                   placeholder="Asia/Seoul"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  예: Asia/Seoul, America/New_York, Europe/London
+                  Examples: Asia/Seoul, America/New_York, Europe/London
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">시간 서버 (선택사항)</label>
+                <label className="block text-sm font-medium mb-2">Date Format</label>
+                <select
+                  value={config.dateFormat}
+                  onChange={(e) => setConfig({ ...config, dateFormat: e.target.value })}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                >
+                  {DATE_FORMAT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Choose how the date is displayed on the clock
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Time Server (Optional)</label>
                 <input
                   type="text"
                   value={config.timeServer || ''}
@@ -139,11 +157,11 @@ export default function SettingsPage() {
 
           {/* Weather Settings */}
           <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-            <h2 className="text-2xl font-semibold mb-4">날씨 설정</h2>
-            
+            <h2 className="text-2xl font-semibold mb-4">Weather Settings</h2>
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">도시</label>
+                <label className="block text-sm font-medium mb-2">City</label>
                 <input
                   type="text"
                   value={config.weatherLocation.city}
@@ -158,7 +176,7 @@ export default function SettingsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">위도 (Latitude)</label>
+                  <label className="block text-sm font-medium mb-2">Latitude</label>
                   <input
                     type="number"
                     step="0.0001"
@@ -176,11 +194,11 @@ export default function SettingsPage() {
                     }}
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                   />
-                  <p className="text-xs text-gray-500 mt-1">-90 ~ 90</p>
+                  <p className="text-xs text-gray-500 mt-1">-90 to 90</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">경도 (Longitude)</label>
+                  <label className="block text-sm font-medium mb-2">Longitude</label>
                   <input
                     type="number"
                     step="0.0001"
@@ -198,12 +216,12 @@ export default function SettingsPage() {
                     }}
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                   />
-                  <p className="text-xs text-gray-500 mt-1">-180 ~ 180</p>
+                  <p className="text-xs text-gray-500 mt-1">-180 to 180</p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">새로고침 간격 (분)</label>
+                <label className="block text-sm font-medium mb-2">Refresh Interval (minutes)</label>
                 <input
                   type="number"
                   min="1"
@@ -225,11 +243,11 @@ export default function SettingsPage() {
 
           {/* Calendar Settings */}
           <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-            <h2 className="text-2xl font-semibold mb-4">캘린더 설정</h2>
-            
+            <h2 className="text-2xl font-semibold mb-4">Calendar Settings</h2>
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Google 캘린더 URL</label>
+                <label className="block text-sm font-medium mb-2">Google Calendar URL</label>
                 <input
                   type="url"
                   value={config.calendarUrl || ''}
@@ -238,12 +256,12 @@ export default function SettingsPage() {
                   placeholder="https://calendar.google.com/calendar/ical/..."
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Google 캘린더에서 iCal 형식의 비공개 URL을 입력하세요
+                  Enter the private iCal URL from Google Calendar
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">새로고침 간격 (분)</label>
+                <label className="block text-sm font-medium mb-2">Refresh Interval (minutes)</label>
                 <input
                   type="number"
                   min="1"
@@ -262,7 +280,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">표시할 일정 개수</label>
+                <label className="block text-sm font-medium mb-2">Number of Events to Display</label>
                 <input
                   type="number"
                   min="1"
@@ -279,18 +297,18 @@ export default function SettingsPage() {
                   }}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">1 ~ 10</p>
+                <p className="text-xs text-gray-500 mt-1">1 to 10</p>
               </div>
             </div>
           </div>
 
           {/* RSS Settings */}
           <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-            <h2 className="text-2xl font-semibold mb-4">RSS 피드 설정</h2>
-            
+            <h2 className="text-2xl font-semibold mb-4">RSS Feed Settings</h2>
+
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">RSS 피드 추가</label>
+                <label className="block text-sm font-medium mb-2">Add RSS Feed</label>
                 <div className="flex gap-2">
                   <input
                     type="url"
@@ -304,13 +322,13 @@ export default function SettingsPage() {
                     onClick={handleAddRSS}
                     className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
                   >
-                    추가
+                    Add
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">현재 RSS 피드</label>
+                <label className="block text-sm font-medium mb-2">Current RSS Feeds</label>
                 <div className="space-y-2">
                   {config.rssFeeds.map((feed, index) => (
                     <div key={index} className="flex justify-between items-center bg-gray-800 px-4 py-2 rounded-lg">
@@ -319,18 +337,18 @@ export default function SettingsPage() {
                         onClick={() => handleRemoveRSS(index)}
                         className="ml-4 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm transition-colors"
                       >
-                        삭제
+                        Remove
                       </button>
                     </div>
                   ))}
                   {config.rssFeeds.length === 0 && (
-                    <div className="text-gray-500 text-sm">등록된 RSS 피드가 없습니다</div>
+                    <div className="text-gray-500 text-sm">No RSS feeds added</div>
                   )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">새로고침 간격 (분)</label>
+                <label className="block text-sm font-medium mb-2">Refresh Interval (minutes)</label>
                 <input
                   type="number"
                   min="1"
@@ -349,7 +367,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">표시할 뉴스 개수</label>
+                <label className="block text-sm font-medium mb-2">Number of News Items to Display</label>
                 <input
                   type="number"
                   min="1"
@@ -366,7 +384,7 @@ export default function SettingsPage() {
                   }}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">1 ~ 10</p>
+                <p className="text-xs text-gray-500 mt-1">1 to 10</p>
               </div>
             </div>
           </div>
@@ -379,13 +397,13 @@ export default function SettingsPage() {
               onClick={handleSave}
               className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition-colors"
             >
-              저장
+              Save
             </button>
             <button
               onClick={handleReset}
               className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-lg font-semibold transition-colors"
             >
-              초기화
+              Reset
             </button>
           </div>
 
@@ -394,10 +412,10 @@ export default function SettingsPage() {
               onClick={handleReloadFromFile}
               className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
             >
-              📄 서버 설정 파일(config.json)에서 다시 불러오기
+              📄 Reload from Server Config File (config.json)
             </button>
             <p className="text-xs text-gray-500 mt-2 text-center">
-              서버에서 config.json 파일을 수정한 경우 이 버튼으로 다시 불러올 수 있습니다
+              Use this button to reload settings from config.json if you modified it on the server
             </p>
           </div>
         </div>

@@ -1,5 +1,6 @@
 {
   "timezone": "Asia/Seoul",
+  "dateFormat": "EEEE, MMMM dd, yyyy",
   "weatherLocation": {
     "lat": 37.5665,
     "lon": 126.978,

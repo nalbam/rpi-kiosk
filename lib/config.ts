@@ -1,6 +1,7 @@
 export interface KioskConfig {
   timeServer?: string;
   timezone: string;
+  dateFormat: string; // date-fns format string
   weatherLocation: {
     lat: number;
     lon: number;
@@ -19,8 +20,20 @@ export interface KioskConfig {
   };
 }
 
+// Available date format options
+export const DATE_FORMAT_OPTIONS = [
+  { value: 'EEEE, MMMM dd, yyyy', label: 'Wednesday, January 01, 2026' },
+  { value: 'MMMM dd, yyyy', label: 'January 01, 2026' },
+  { value: 'yyyy-MM-dd', label: '2026-01-01' },
+  { value: 'MM/dd/yyyy', label: '01/01/2026' },
+  { value: 'dd/MM/yyyy', label: '01/01/2026' },
+  { value: 'dd MMMM yyyy', label: '01 January 2026' },
+  { value: 'EEE, MMM dd, yyyy', label: 'Wed, Jan 01, 2026' },
+] as const;
+
 export const defaultConfig: KioskConfig = {
   timezone: 'Asia/Seoul',
+  dateFormat: 'EEEE, MMMM dd, yyyy',
   weatherLocation: {
     lat: 37.5665,
     lon: 126.9780,

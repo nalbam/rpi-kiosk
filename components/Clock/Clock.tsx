@@ -3,16 +3,17 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { ko } from 'date-fns/locale/ko';
 import { getConfig } from '@/lib/storage';
 
 export default function Clock() {
   const [time, setTime] = useState<Date | null>(null);
   const [timezone, setTimezone] = useState('Asia/Seoul');
+  const [dateFormat, setDateFormat] = useState('EEEE, MMMM dd, yyyy');
 
   useEffect(() => {
     const config = getConfig();
     setTimezone(config.timezone);
+    setDateFormat(config.dateFormat || 'EEEE, MMMM dd, yyyy');
   }, []);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function Clock() {
           --:--:--
         </div>
         <div className="text-vw-2xl text-gray-500">
-          로딩 중...
+          Loading...
         </div>
       </div>
     );
@@ -47,7 +48,7 @@ export default function Clock() {
         {format(zonedTime, 'HH:mm:ss')}
       </div>
       <div className="text-vw-2xl text-gray-400">
-        {format(zonedTime, 'yyyy년 MM월 dd일 EEEE', { locale: ko })}
+        {format(zonedTime, dateFormat)}
       </div>
       <div className="text-vw-base text-gray-500 mt-vw-xs">
         {timezone}

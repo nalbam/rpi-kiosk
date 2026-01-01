@@ -53,8 +53,8 @@ export default function Weather() {
   if (loading) {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">날씨</h2>
-        <div className="text-gray-400 text-vw-sm">날씨 정보 로딩 중...</div>
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">Weather</h2>
+        <div className="text-gray-400 text-vw-sm">Loading weather...</div>
       </div>
     );
   }
@@ -62,8 +62,8 @@ export default function Weather() {
   if (error) {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">날씨</h2>
-        <div className="text-gray-400 text-vw-sm">날씨 정보를 가져올 수 없습니다</div>
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">Weather</h2>
+        <div className="text-gray-400 text-vw-sm">Unable to fetch weather</div>
       </div>
     );
   }
@@ -71,8 +71,8 @@ export default function Weather() {
   if (!weather) {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">날씨</h2>
-        <div className="text-gray-400 text-vw-sm">날씨 정보를 가져올 수 없습니다</div>
+        <h2 className="text-vw-xl font-semibold mb-vw-sm">Weather</h2>
+        <div className="text-gray-400 text-vw-sm">Unable to fetch weather</div>
       </div>
     );
   }
@@ -93,7 +93,7 @@ export default function Weather() {
 
   return (
     <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-      <h2 className="text-vw-xl font-semibold mb-vw-sm">날씨</h2>
+      <h2 className="text-vw-xl font-semibold mb-vw-sm">Weather</h2>
       <div className="text-center flex-1 flex flex-col justify-center">
         <div className="text-vw-5xl mb-vw-xs">{getWeatherIcon(weather.weatherCode)}</div>
         <div className="text-vw-4xl font-bold mb-vw-xs">{weather.temperature}°C</div>
@@ -101,11 +101,11 @@ export default function Weather() {
         <div className="text-vw-base text-gray-400">{city}</div>
         <div className="mt-vw-sm grid grid-cols-2 gap-vw-sm text-vw-sm text-gray-400">
           <div>
-            <div>습도</div>
+            <div>Humidity</div>
             <div className="text-white text-vw-base">{weather.humidity}%</div>
           </div>
           <div>
-            <div>풍속</div>
+            <div>Wind</div>
             <div className="text-white text-vw-base">{weather.windSpeed} km/h</div>
           </div>
         </div>

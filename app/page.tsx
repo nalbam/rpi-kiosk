@@ -25,7 +25,7 @@ export default function Home() {
             onClick={() => router.push('/settings')}
             className="px-vw-sm py-vw-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors text-vw-xs"
           >
-            ⚙️ 설정
+            ⚙️ Settings
           </button>
         </div>
 
