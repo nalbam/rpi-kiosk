@@ -162,100 +162,91 @@ export default function LocationSettings({
   const handleDetectLocation = async () => {
     setDetectingLocation(true);
 
-    // Try geolocation first (GPS/WiFi-based)
-    let coords = null;
-    let cityName = null;
+    try {
+      // Try both GPS geolocation AND IP-based location in parallel
+      // GPS provides accurate coordinates, IP provides timezone and city name
+      const [gpsCoords, ipLocation] = await Promise.all([
+        navigator.geolocation ? detectGeolocation() : Promise.resolve(null),
+        detectLocationByIP(),
+      ]);
 
-    if (navigator.geolocation) {
-      coords = await detectGeolocation();
-    }
+      console.log('GPS location:', gpsCoords);
+      console.log('IP location:', ipLocation);
 
-    // If geolocation failed, try IP-based location
-    if (!coords) {
-      const ipLocation = await detectLocationByIP();
-      if (ipLocation) {
-        coords = { lat: ipLocation.lat, lon: ipLocation.lon };
-        cityName = ipLocation.city;
+      // Combine the best data from both sources
+      let finalCoords = gpsCoords || (ipLocation ? { lat: ipLocation.lat, lon: ipLocation.lon } : null);
+      let finalCity = ipLocation?.city || null;
+      let finalTimezone = ipLocation?.timezone || null;
+
+      if (!finalCoords) {
+        setErrorToast?.('Failed to detect location. Please check your network connection and try again.');
+        setDetectingLocation(false);
+        return;
       }
-    }
 
-    if (coords) {
-      // Call reverse geocoding to get city name and timezone (if not already from IP)
-      try {
-        const response = await fetch(`/api/reverse-geocoding?lat=${coords.lat}&lon=${coords.lon}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (!cityName) {
-            cityName = data.displayName;
+      // If we have GPS coords, try reverse geocoding to get a better city name
+      if (gpsCoords && !finalCity) {
+        try {
+          const response = await fetch(`/api/reverse-geocoding?lat=${gpsCoords.lat}&lon=${gpsCoords.lon}`);
+          if (response.ok) {
+            const data = await response.json();
+            finalCity = data.displayName;
           }
+        } catch (error) {
+          console.error('Reverse geocoding failed:', error);
+        }
+      }
 
-          // Also try to get timezone from forward geocoding using the city name
-          let timezone = config.timezone;
-          if (cityName) {
-            try {
-              const geoResponse = await fetch(`/api/geocoding?q=${encodeURIComponent(cityName)}`);
-              if (geoResponse.ok) {
-                const geoData = await geoResponse.json();
-                if (geoData.results && geoData.results.length > 0) {
-                  const firstResult = geoData.results[0];
-                  if (firstResult.timezone) {
-                    const detectedTimezone = firstResult.timezone; // Capture to maintain type guard in callback
-                    timezone = detectedTimezone;
-                    // Add timezone to list if not present (using functional setter to avoid duplicates)
-                    setTimezones((prev) => {
-                      if (prev.includes(detectedTimezone)) {
-                        return prev;
-                      }
-                      return [...prev, detectedTimezone].sort();
-                    });
-                  }
-                }
+      // If we still don't have timezone, try forward geocoding with the city name
+      if (!finalTimezone && finalCity) {
+        try {
+          const geoResponse = await fetch(`/api/geocoding?q=${encodeURIComponent(finalCity)}`);
+          if (geoResponse.ok) {
+            const geoData = await geoResponse.json();
+            if (geoData.results && geoData.results.length > 0) {
+              const firstResult = geoData.results[0];
+              if (firstResult.timezone) {
+                finalTimezone = firstResult.timezone;
               }
-            } catch (error) {
-              console.error('Failed to get timezone:', error);
             }
           }
-
-          // Update config with all detected information
-          setConfig({
-            ...config,
-            weatherLocation: {
-              lat: coords.lat,
-              lon: coords.lon,
-              city: cityName || data.displayName,
-            },
-            timezone: timezone,
-          });
-        } else {
-          // Fallback: just set coordinates with city name from IP (if available)
-          setConfig({
-            ...config,
-            weatherLocation: {
-              ...config.weatherLocation,
-              lat: coords.lat,
-              lon: coords.lon,
-              city: cityName || config.weatherLocation.city,
-            },
-          });
+        } catch (error) {
+          console.error('Failed to get timezone from forward geocoding:', error);
         }
-      } catch (error) {
-        console.error('Reverse geocoding error:', error);
-        // Fallback: just set coordinates with city name from IP (if available)
-        setConfig({
-          ...config,
-          weatherLocation: {
-            ...config.weatherLocation,
-            lat: coords.lat,
-            lon: coords.lon,
-            city: cityName || config.weatherLocation.city,
-          },
+      }
+
+      // Add timezone to list if we found one
+      if (finalTimezone) {
+        setTimezones((prev) => {
+          if (prev.includes(finalTimezone!)) {
+            return prev;
+          }
+          return [...prev, finalTimezone!].sort();
         });
       }
-    } else {
-      setErrorToast?.('Failed to detect location. Please check your network connection and try again.');
-    }
 
-    setDetectingLocation(false);
+      // Update config with all detected information
+      setConfig({
+        ...config,
+        weatherLocation: {
+          lat: finalCoords.lat,
+          lon: finalCoords.lon,
+          city: finalCity || config.weatherLocation.city,
+        },
+        timezone: finalTimezone || config.timezone,
+      });
+
+      console.log('Final location data:', {
+        coords: finalCoords,
+        city: finalCity,
+        timezone: finalTimezone,
+      });
+    } catch (error) {
+      console.error('Location detection error:', error);
+      setErrorToast?.('Failed to detect location. Please try again.');
+    } finally {
+      setDetectingLocation(false);
+    }
   };
 
   const handleApplyDetectedTimezone = () => {

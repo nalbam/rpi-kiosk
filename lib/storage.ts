@@ -164,8 +164,9 @@ export async function detectGeolocation(): Promise<{ lat: number; lon: number } 
 /**
  * Detect location using IP address (fallback for when geolocation fails)
  * Uses ipapi.co service (free, no API key required)
+ * Returns coordinates, city name, and timezone in IANA format
  */
-export async function detectLocationByIP(): Promise<{ lat: number; lon: number; city: string } | null> {
+export async function detectLocationByIP(): Promise<{ lat: number; lon: number; city: string; timezone?: string } | null> {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -184,12 +185,13 @@ export async function detectLocationByIP(): Promise<{ lat: number; lon: number; 
     if (response.ok) {
       const data = await response.json();
 
-      // Validate response data
+      // Validate response data - timezone is optional
       if (data.latitude && data.longitude && data.city) {
         const result = {
           lat: data.latitude,
           lon: data.longitude,
           city: data.city,
+          timezone: data.timezone, // IANA format like "America/Los_Angeles"
         };
         console.log('IP-based location detected:', result);
         return result;
