@@ -157,25 +157,19 @@ export default function SettingsPage() {
     }
   };
 
-  const handleApplyTimezoneFromCity = () => {
-    if (!config || !config.weatherLocation.city) {
-      alert('Please enter a city name first');
+  const handleApplyCityFromTimezone = () => {
+    if (!config || !config.timezone) {
       return;
     }
 
-    // Convert city name to timezone format (e.g., "New York" -> "New_York")
-    const cityFormatted = config.weatherLocation.city.replace(/ /g, '_');
-
-    // Search for matching timezone in the list
-    const matchingTimezone = timezones.find((tz) =>
-      tz.toLowerCase().includes(cityFormatted.toLowerCase())
-    );
-
-    if (matchingTimezone) {
-      setConfig({ ...config, timezone: matchingTimezone });
-      alert(`Timezone set to: ${matchingTimezone}`);
-    } else {
-      alert(`No matching timezone found for city: ${config.weatherLocation.city}\nPlease select timezone manually.`);
+    // Extract city from timezone (e.g., "Asia/Seoul" -> "Seoul", "America/New_York" -> "New York")
+    if (config.timezone.includes('/')) {
+      const parts = config.timezone.split('/');
+      const city = parts[parts.length - 1].replace(/_/g, ' ');
+      setConfig({
+        ...config,
+        weatherLocation: { ...config.weatherLocation, city },
+      });
     }
   };
 
@@ -228,24 +222,14 @@ export default function SettingsPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm font-medium">Timezone</label>
-                  <div className="flex gap-2">
-                    {detectedTimezone && (
-                      <button
-                        onClick={handleApplyDetectedTimezone}
-                        className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
-                      >
-                        Use Browser Default ({detectedTimezone})
-                      </button>
-                    )}
-                    {config?.weatherLocation.city && (
-                      <button
-                        onClick={handleApplyTimezoneFromCity}
-                        className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors"
-                      >
-                        Use City ({config.weatherLocation.city})
-                      </button>
-                    )}
-                  </div>
+                  {detectedTimezone && (
+                    <button
+                      onClick={handleApplyDetectedTimezone}
+                      className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                    >
+                      Use Browser Default ({detectedTimezone})
+                    </button>
+                  )}
                 </div>
                 <select
                   value={config.timezone}
@@ -306,14 +290,24 @@ export default function SettingsPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm font-medium">City</label>
-                  {detectedCity && (
-                    <button
-                      onClick={handleApplyDetectedCity}
-                      className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
-                    >
-                      Use Browser Default ({detectedCity})
-                    </button>
-                  )}
+                  <div className="flex gap-2">
+                    {detectedCity && (
+                      <button
+                        onClick={handleApplyDetectedCity}
+                        className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                      >
+                        Use Browser Default ({detectedCity})
+                      </button>
+                    )}
+                    {config?.timezone.includes('/') && (
+                      <button
+                        onClick={handleApplyCityFromTimezone}
+                        className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors"
+                      >
+                        Use from Timezone ({config.timezone.split('/').pop()?.replace(/_/g, ' ')})
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <input
                   type="text"
