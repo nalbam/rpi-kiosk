@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import ICAL from 'ical.js';
 import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
+import { API, DISPLAY } from '@/lib/constants';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -24,8 +25,8 @@ export async function GET(request: Request) {
 
   try {
     // Fetch with timeout and size limits
-    const response = await fetchWithTimeout(calendarUrl, 10000, 5 * 1024 * 1024); // 10s timeout, 5MB max
-    
+    const response = await fetchWithTimeout(calendarUrl, API.TIMEOUT_MS, API.MAX_CALENDAR_SIZE);
+
     if (!response.ok) {
       throw new Error('Failed to fetch calendar data');
     }
@@ -36,6 +37,9 @@ export async function GET(request: Request) {
     const vevents = comp.getAllSubcomponents('vevent');
 
     const now = new Date();
+    const oneMonthFromNow = new Date();
+    oneMonthFromNow.setDate(now.getDate() + DISPLAY.CALENDAR_DAYS_AHEAD);
+
     const events = vevents
       .map((vevent: any) => {
         const event = new ICAL.Event(vevent);
@@ -47,9 +51,12 @@ export async function GET(request: Request) {
           location: event.location || '',
         };
       })
-      .filter((event: any) => event.end >= now)
+      .filter((event: any) => {
+        // Show events that haven't ended yet and start within the next month
+        return event.end >= now && event.start <= oneMonthFromNow;
+      })
       .sort((a: any, b: any) => a.start.getTime() - b.start.getTime())
-      .slice(0, 10);
+      .slice(0, DISPLAY.MAX_CALENDAR_EVENTS);
 
     return NextResponse.json({ events });
   } catch (error) {

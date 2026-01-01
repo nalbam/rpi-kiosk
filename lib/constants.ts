@@ -31,7 +31,10 @@ export const API = {
  */
 export const DISPLAY = {
   /** Maximum number of calendar events to show */
-  MAX_CALENDAR_EVENTS: 10,
+  MAX_CALENDAR_EVENTS: 5,
+
+  /** Calendar events filter: show events within this many days from now */
+  CALENDAR_DAYS_AHEAD: 30,
 
   /** Maximum number of RSS items per feed */
   MAX_RSS_ITEMS_PER_FEED: 10,
