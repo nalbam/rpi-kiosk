@@ -75,12 +75,29 @@ fi
 
 echo "Using browser: $CHROMIUM_CMD"
 
-# Step 3: Fix Chromium crash warnings
-echo "Fixing previous session state..."
+# Step 3: Configure Chromium preferences
+echo "Configuring Chromium preferences..."
 
 if [ -f "$CHROMIUM_CONFIG_DIR/Default/Preferences" ]; then
+    # Fix crash warnings
     sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
     sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
+
+    # Disable translate feature in preferences
+    sed -i 's/"translate_enabled":true/"translate_enabled":false/' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
+
+    # If translate_enabled doesn't exist, add it
+    if ! grep -q '"translate_enabled"' "$CHROMIUM_CONFIG_DIR/Default/Preferences"; then
+        # Add translate_enabled:false to the preferences JSON
+        # This is a bit tricky with sed, so we'll use a different approach
+        echo "  - Adding translate_enabled setting..."
+        # Insert after the first opening brace
+        sed -i '1 a\  "translate_enabled": false,' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
+    fi
+
+    echo "  - Chromium preferences updated"
+else
+    echo "  - Preferences file not found (will be created on first run)"
 fi
 
 # Step 4: Start Next.js server
@@ -123,6 +140,7 @@ $CHROMIUM_CMD \
   --disable-features=Translate,TranslateUI,PasswordManager \
   --password-store=basic \
   --disable-component-update \
+  --disable-sync \
   http://localhost:3000
 
 # Cleanup when Chromium exits
