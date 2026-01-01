@@ -9,9 +9,7 @@
     "city": "Seoul"
   },
   "calendarUrl": "",
-  "rssFeeds": [
-    "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
-  ],
+  "rssFeeds": [],
   "refreshIntervals": {
     "weather": 30,
     "calendar": 15,

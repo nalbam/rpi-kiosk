@@ -2,6 +2,33 @@ import { KioskConfig, defaultConfig } from './config';
 import { API } from './constants';
 
 /**
+ * Detect language and country from browser settings
+ * Returns language code (e.g., 'en', 'ko', 'ja') and country code (e.g., 'US', 'KR', 'JP')
+ */
+function detectLanguageAndCountry(): { language: string; country: string } {
+  try {
+    // Get browser language (e.g., "en-US", "ko-KR", "ja-JP")
+    const locale = navigator.language || 'en-US';
+    const [language, country] = locale.split('-');
+
+    return {
+      language: language.toLowerCase(),
+      country: (country || language).toUpperCase(),
+    };
+  } catch (error) {
+    console.error('Failed to detect language/country:', error);
+    return { language: 'en', country: 'US' };
+  }
+}
+
+/**
+ * Generate Google News RSS URL based on language and country
+ */
+function generateGoogleNewsRSS(language: string, country: string): string {
+  return `https://news.google.com/rss?hl=${language}&gl=${country}&ceid=${country}:${language}`;
+}
+
+/**
  * Detect timezone and city from browser settings
  */
 export function detectBrowserSettings(): Partial<KioskConfig> {
@@ -36,12 +63,17 @@ export function detectBrowserSettings(): Partial<KioskConfig> {
     console.error('Failed to extract city from timezone:', error);
   }
 
+  // Detect language and country for RSS feeds
+  const { language, country } = detectLanguageAndCountry();
+  const rssFeeds = [generateGoogleNewsRSS(language, country)];
+
   const result = {
     timezone,
     weatherLocation: {
       ...defaultConfig.weatherLocation,
       city,
     },
+    rssFeeds,
   };
 
   console.log('Browser settings detected:', result);
