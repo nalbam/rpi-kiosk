@@ -6,13 +6,13 @@
 # This script updates the application to the latest version
 #
 # What it does:
-#   1. Stops the service
-#   2. Pulls latest code from git
-#   3. Updates npm dependencies
-#   4. Rebuilds the application
-#   5. Restarts the service
+#   1. Pulls latest code from git
+#   2. Updates npm dependencies
+#   3. Rebuilds the application
+#   4. Restarts the service
 #
 # What it does NOT do:
+#   - Stop the service (continues running during update)
 #   - Update system packages (chromium, Node.js, etc.)
 #   - Modify systemd service file
 #
@@ -43,17 +43,8 @@ echo "  User: $INSTALL_USER"
 echo "  Directory: $INSTALL_DIR"
 echo ""
 
-# Step 1: Stop service
-echo "[1/5] Stopping service..."
-if systemctl is-active --quiet rpi-kiosk.service; then
-    sudo systemctl stop rpi-kiosk.service
-    echo "  - Stopped rpi-kiosk.service"
-else
-    echo "  - Service is not running"
-fi
-
-# Step 2: Pull latest code
-echo "[2/5] Pulling latest code from git..."
+# Step 1: Pull latest code
+echo "[1/4] Pulling latest code from git..."
 cd "$INSTALL_DIR"
 
 if git pull; then
@@ -63,18 +54,18 @@ else
     echo "  - Continuing with current code..."
 fi
 
-# Step 3: Update npm dependencies
-echo "[3/5] Updating npm dependencies..."
+# Step 2: Update npm dependencies
+echo "[2/4] Updating npm dependencies..."
 npm install --legacy-peer-deps
 
-# Step 4: Rebuild application
-echo "[4/5] Rebuilding application..."
+# Step 3: Rebuild application
+echo "[3/4] Rebuilding application..."
 npm run build
 
-# Step 5: Restart service
-echo "[5/5] Restarting service..."
-sudo systemctl start rpi-kiosk.service
-echo "  - Started rpi-kiosk.service"
+# Step 4: Restart service
+echo "[4/4] Restarting service..."
+sudo systemctl restart rpi-kiosk.service
+echo "  - Restarted rpi-kiosk.service"
 
 # Wait a moment for service to start
 sleep 2
