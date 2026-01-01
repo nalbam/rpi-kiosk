@@ -24,7 +24,10 @@ set -e  # Exit on any error
 
 INSTALL_USER=${SUDO_USER:-$USER}
 INSTALL_HOME=$(eval echo ~$INSTALL_USER)
-INSTALL_DIR="$INSTALL_HOME/rpi-kiosk"
+
+# Get script directory and project directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 
 # -----------------------------------------------------------------------------
 # Main Installation
