@@ -50,9 +50,9 @@ sudo apt-get install jq
 ./scripts/config.sh list
 ```
 
-**Priority**: localStorage > config.json > browser-detected > defaults
+**Priority**: config.json > browser-detected > defaults
 
-**Smart Merge**: When `config.json` exists, the app compares each value to defaults:
+**Smart Merge**: On first visit, browser settings are auto-detected and saved to `config.json`. When `config.json` exists, the app compares each value to defaults:
 - If `config.json` value **differs** from default → Use `config.json` value
 - If `config.json` value **matches** default → Use browser-detected value
 
@@ -173,5 +173,10 @@ Choose from these formats in settings:
 
 ## Storage Location
 
-- Browser localStorage
-- Reset: Settings page → Reset button
+- Server-side `config.json` file in project root directory
+- Managed via `/api/config` endpoint (GET/POST)
+- Editable via:
+  - Web UI: Settings page (saves to server)
+  - CLI: `./scripts/config.sh` command
+  - Direct edit: Modify `config.json` file
+- Reset: Settings page → Reset to Defaults button

@@ -22,6 +22,7 @@ http://localhost:3000
 app/
 ├── api/              # API Routes
 │   ├── calendar/
+│   ├── config/       # Configuration file (config.json) management
 │   ├── rss/
 │   └── weather/
 ├── settings/
@@ -38,13 +39,15 @@ components/
 lib/
 ├── config.ts         # Configuration types and defaults
 ├── constants.ts      # System constants (API limits, validation ranges)
-├── storage.ts        # localStorage management
+├── storage.ts        # Configuration management and browser detection
 └── urlValidation.ts  # SSRF protection
 
 scripts/
-├── install.sh
-├── uninstall.sh
-└── start-kiosk.sh
+├── config.sh         # Configuration file (config.json) CLI management
+├── install.sh        # Automated installation for Raspberry Pi
+├── start-kiosk.sh    # Launch kiosk mode
+├── uninstall.sh      # Service removal
+└── update.sh         # Update code and rebuild (no restart)
 ```
 
 ## Scripts

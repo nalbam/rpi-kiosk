@@ -99,9 +99,9 @@ Manage settings with shell script:
 ./scripts/config.sh list
 ```
 
-**Priority**: localStorage > config.json > browser-detected > defaults
+**Priority**: config.json > browser-detected > defaults
 
-**Smart Merge**: If config.json values match defaults (e.g., America/New_York, New York, 40.7128/-74.0060), browser-detected values are used instead. Only explicitly different values override auto-detection.
+**Smart Merge**: On first visit, browser settings (timezone, city, coordinates, language-based RSS) are auto-detected and saved to config.json. If config.json values match defaults, browser-detected values take precedence. Only explicitly different values override auto-detection.
 
 ### Configuration Options
 

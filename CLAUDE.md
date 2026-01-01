@@ -24,10 +24,10 @@ RPI Kiosk is a Raspberry Pi kiosk mode display application built with Next.js 14
 ### Client-Server Pattern
 - **Client Components** (`components/*/`): React components that fetch data from API routes and manage UI state
 - **API Routes** (`app/api/*/route.ts`): Server-side endpoints that fetch external data (weather, calendar, RSS) and apply security validations
-- **Configuration**: Stored in browser localStorage, managed via `lib/storage.ts`, with defaults in `lib/config.ts`
+- **Configuration**: Stored in server-side `config.json` file, managed via `/api/config` endpoint, with defaults in `lib/config.ts`
 
 ### Data Flow
-1. Client components read configuration from localStorage (`getConfig()`)
+1. Client components read configuration from server (`getConfig()` → `/api/config` → `config.json`)
 2. Components call Next.js API routes with configuration parameters
 3. API routes validate URLs (SSRF protection), fetch external data, and return processed results
 4. Components refresh data based on configurable intervals (default: weather 30min, calendar/RSS 15min)
@@ -36,9 +36,11 @@ RPI Kiosk is a Raspberry Pi kiosk mode display application built with Next.js 14
 
 #### Configuration (`lib/config.ts`, `lib/storage.ts`)
 - `KioskConfig` interface defines all user settings (timezone, weather location, calendar URL, RSS feeds, refresh intervals)
-- `getConfig()` - Reads from localStorage with fallback to `defaultConfig`
-- `saveConfig()` - Persists partial updates to localStorage
-- Configuration is client-side only (no server state)
+- `getConfig()` - Reads from server via `/api/config`, which loads `config.json` with fallback to `defaultConfig`
+- `saveConfig()` - Persists updates to server via POST `/api/config`, which writes to `config.json`
+- `detectBrowserSettings()` - Auto-detects timezone, city, and language/country for Google News RSS
+- `detectGeolocation()` - Requests browser geolocation for weather coordinates
+- `initializeConfig()` - First-visit setup: detects browser settings and creates `config.json` if absent
 
 #### Security (`lib/urlValidation.ts`)
 CRITICAL: All external URLs (calendar, RSS) MUST pass through `validateCalendarUrl()` to prevent SSRF attacks.
@@ -79,6 +81,7 @@ All widget components (`components/*/`) follow this pattern:
 app/
 ├── api/              # Server-side API routes
 │   ├── calendar/     # Google Calendar iCal fetching
+│   ├── config/       # Configuration file (config.json) management
 │   ├── rss/          # RSS feed aggregation
 │   └── weather/      # Open-Meteo API integration
 ├── settings/         # Settings page (client component)
@@ -93,8 +96,16 @@ components/           # Reusable widgets
 
 lib/                  # Shared utilities
 ├── config.ts         # Configuration types and defaults
-├── storage.ts        # localStorage management
+├── constants.ts      # System constants (API limits, validation ranges)
+├── storage.ts        # Configuration management and browser detection
 └── urlValidation.ts  # SSRF protection utilities
+
+scripts/              # Deployment and management scripts
+├── config.sh         # Configuration file (config.json) CLI management
+├── install.sh        # Automated installation for Raspberry Pi
+├── start-kiosk.sh    # Launch kiosk mode
+├── uninstall.sh      # Service removal
+└── update.sh         # Update code and rebuild (no restart)
 ```
 
 ## Technology Stack
@@ -138,4 +149,4 @@ New widgets should:
 - **Input Validation**: All API routes validate parameters before processing
 - **Response Size Limits**: Prevent memory exhaustion from large responses
 - **Timeout Protection**: Prevent hanging requests
-- **No Sensitive Data**: Application uses client-side config only (no secrets, no database)
+- **No Sensitive Data**: Application uses server-side config.json file only (no secrets, no database)
