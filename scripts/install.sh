@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # =============================================================================
-# RPI Kiosk - Installation Script
+# RPI Hub - Installation Script
 # =============================================================================
-# This script installs and configures the RPI Kiosk on Raspberry Pi
+# This script installs and configures the RPI Hub on Raspberry Pi
 #
 # What it does:
 #   1. Updates system packages
@@ -34,7 +34,7 @@ INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 # -----------------------------------------------------------------------------
 
 echo "========================================="
-echo "RPI Kiosk Installation"
+echo "RPI Hub Installation"
 echo "========================================="
 echo ""
 echo "Installation settings:"
@@ -94,7 +94,7 @@ npm run build
 echo "[6/7] Setting desktop wallpaper..."
 
 # Create config directory for backup
-CONFIG_DIR="$INSTALL_HOME/.config/rpi-kiosk"
+CONFIG_DIR="$INSTALL_HOME/.config/rpi-hub"
 mkdir -p "$CONFIG_DIR"
 
 # Check if running in graphical environment
@@ -108,7 +108,7 @@ if [ -n "$DISPLAY" ] || [ -f "$INSTALL_HOME/.config/pcmanfm/LXDE-pi/desktop-item
     fi
 
     # Copy background image to home directory
-    WALLPAPER_PATH="$INSTALL_HOME/.config/rpi-kiosk/background.png"
+    WALLPAPER_PATH="$INSTALL_HOME/.config/rpi-hub/background.png"
     if [ -f "$INSTALL_DIR/public/background.png" ]; then
         cp "$INSTALL_DIR/public/background.png" "$WALLPAPER_PATH"
         echo "  - Copied background.png to $WALLPAPER_PATH"
@@ -134,10 +134,10 @@ echo "[7/7] Installing systemd service..."
 chmod +x scripts/start-kiosk.sh
 
 # Create systemd service file
-echo "  - Creating rpi-kiosk.service..."
-sudo tee /etc/systemd/system/rpi-kiosk.service > /dev/null <<EOF
+echo "  - Creating rpi-hub.service..."
+sudo tee /etc/systemd/system/rpi-hub.service > /dev/null <<EOF
 [Unit]
-Description=RPI Kiosk (Next.js + Chromium Kiosk Mode)
+Description=RPI Hub (Next.js + Chromium Kiosk Mode)
 After=graphical.target network.target
 Wants=graphical.target
 
@@ -162,10 +162,10 @@ echo "  - Reloading systemd daemon..."
 sudo systemctl daemon-reload
 
 echo "  - Enabling service..."
-sudo systemctl enable rpi-kiosk.service
+sudo systemctl enable rpi-hub.service
 
 echo "  - Starting service..."
-sudo systemctl start rpi-kiosk.service
+sudo systemctl start rpi-hub.service
 
 # -----------------------------------------------------------------------------
 # Installation Complete
@@ -177,13 +177,13 @@ echo "Installation Complete!"
 echo "========================================="
 echo ""
 echo "Service installed and started:"
-echo "  - rpi-kiosk.service"
+echo "  - rpi-hub.service"
 echo ""
 echo "Useful commands:"
-echo "  - Check status:  sudo systemctl status rpi-kiosk"
-echo "  - View logs:     sudo journalctl -u rpi-kiosk -f"
-echo "  - Restart:       sudo systemctl restart rpi-kiosk"
-echo "  - Stop:          sudo systemctl stop rpi-kiosk"
+echo "  - Check status:  sudo systemctl status rpi-hub"
+echo "  - View logs:     sudo journalctl -u rpi-hub -f"
+echo "  - Restart:       sudo systemctl restart rpi-hub"
+echo "  - Stop:          sudo systemctl stop rpi-hub"
 echo ""
 echo "To uninstall:"
 echo "  ./scripts/uninstall.sh"

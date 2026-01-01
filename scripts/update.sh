@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =============================================================================
-# RPI Kiosk - Update Script
+# RPI Hub - Update Script
 # =============================================================================
 # This script updates the application to the latest version
 #
@@ -16,7 +16,7 @@
 #   - Modify systemd service file
 #
 # Note: After running this script, restart the service to apply changes:
-#   sudo systemctl restart rpi-kiosk
+#   sudo systemctl restart rpi-hub
 #
 # Usage:
 #   ./scripts/update.sh
@@ -40,7 +40,7 @@ INSTALL_DIR="$(dirname "$SCRIPT_DIR")"
 # -----------------------------------------------------------------------------
 
 echo "========================================="
-echo "RPI Kiosk Update"
+echo "RPI Hub Update"
 echo "========================================="
 echo ""
 echo "Update settings:"
@@ -77,10 +77,10 @@ echo "Update Complete!"
 echo "========================================="
 echo ""
 echo "IMPORTANT: Restart the service to apply changes:"
-echo "  sudo systemctl restart rpi-kiosk"
+echo "  sudo systemctl restart rpi-hub"
 echo ""
 echo "Useful commands:"
-echo "  - Restart:       sudo systemctl restart rpi-kiosk"
-echo "  - Check status:  sudo systemctl status rpi-kiosk"
-echo "  - View logs:     sudo journalctl -u rpi-kiosk -f"
+echo "  - Restart:       sudo systemctl restart rpi-hub"
+echo "  - Check status:  sudo systemctl status rpi-hub"
+echo "  - View logs:     sudo journalctl -u rpi-hub -f"
 echo ""

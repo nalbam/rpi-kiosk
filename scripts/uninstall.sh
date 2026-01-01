@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # =============================================================================
-# RPI Kiosk - Uninstallation Script
+# RPI Hub - Uninstallation Script
 # =============================================================================
 # This script removes the systemd service
 #
 # What it does:
-#   1. Stops the rpi-kiosk service
+#   1. Stops the rpi-hub service
 #   2. Disables the service
 #   3. Removes the service file
 #   4. Reloads systemd daemon
@@ -26,33 +26,33 @@
 # -----------------------------------------------------------------------------
 
 echo "========================================="
-echo "RPI Kiosk Uninstallation"
+echo "RPI Hub Uninstallation"
 echo "========================================="
 echo ""
 
 # Step 1: Stop service
 echo "[1/4] Stopping service..."
-if systemctl is-active --quiet rpi-kiosk.service; then
-    sudo systemctl stop rpi-kiosk.service
-    echo "  - Stopped rpi-kiosk.service"
+if systemctl is-active --quiet rpi-hub.service; then
+    sudo systemctl stop rpi-hub.service
+    echo "  - Stopped rpi-hub.service"
 else
     echo "  - Service is not running"
 fi
 
 # Step 2: Disable service
 echo "[2/4] Disabling service..."
-if systemctl is-enabled --quiet rpi-kiosk.service 2>/dev/null; then
-    sudo systemctl disable rpi-kiosk.service
-    echo "  - Disabled rpi-kiosk.service"
+if systemctl is-enabled --quiet rpi-hub.service 2>/dev/null; then
+    sudo systemctl disable rpi-hub.service
+    echo "  - Disabled rpi-hub.service"
 else
     echo "  - Service is not enabled"
 fi
 
 # Step 3: Remove service file
 echo "[3/4] Removing service file..."
-if [ -f /etc/systemd/system/rpi-kiosk.service ]; then
-    sudo rm /etc/systemd/system/rpi-kiosk.service
-    echo "  - Removed rpi-kiosk.service"
+if [ -f /etc/systemd/system/rpi-hub.service ]; then
+    sudo rm /etc/systemd/system/rpi-hub.service
+    echo "  - Removed rpi-hub.service"
 else
     echo "  - Service file not found"
 fi
@@ -67,7 +67,7 @@ echo "[5/5] Restoring original wallpaper..."
 
 INSTALL_USER=${SUDO_USER:-$USER}
 INSTALL_HOME=$(eval echo ~$INSTALL_USER)
-CONFIG_DIR="$INSTALL_HOME/.config/rpi-kiosk"
+CONFIG_DIR="$INSTALL_HOME/.config/rpi-hub"
 BACKUP_FILE="$CONFIG_DIR/wallpaper.backup"
 
 if [ -f "$BACKUP_FILE" ]; then
@@ -100,13 +100,13 @@ echo "========================================="
 echo "Uninstallation Complete!"
 echo "========================================="
 echo ""
-echo "Service removed: rpi-kiosk.service"
+echo "Service removed: rpi-hub.service"
 echo "Wallpaper restored to original"
 echo ""
 echo "Note: The following are NOT removed:"
-echo "  - Application files in ~/rpi-kiosk"
+echo "  - Application files in ~/rpi-hub"
 echo "  - System packages (chromium, Node.js, etc.)"
 echo ""
 echo "To completely remove application files:"
-echo "  cd ~ && rm -rf rpi-kiosk"
+echo "  cd ~ && rm -rf rpi-hub"
 echo ""

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =============================================================================
-# RPI Kiosk - Configuration Management Script
+# RPI Hub - Configuration Management Script
 # =============================================================================
 # This script manages the config.json file
 #

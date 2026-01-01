@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RPI Kiosk",
+  title: "RPI Hub",
   description: "Raspberry Pi Kiosk Display",
   icons: {
     icon: '/favicon.ico',

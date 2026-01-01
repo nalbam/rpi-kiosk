@@ -8,7 +8,7 @@ import { API } from './constants';
  */
 export function validateCalendarUrl(urlString: string): { valid: boolean; error?: string } {
   let url: URL;
-  
+
   try {
     url = new URL(urlString);
   } catch {
@@ -30,7 +30,7 @@ export function validateCalendarUrl(urlString: string): { valid: boolean; error?
     '::1',
     '::ffff:127.0.0.1',
   ];
-  
+
   if (localhostPatterns.some(pattern => hostname === pattern || hostname.includes(pattern))) {
     return { valid: false, error: 'Localhost URLs are not allowed' };
   }
@@ -40,7 +40,7 @@ export function validateCalendarUrl(urlString: string): { valid: boolean; error?
     '169.254.169.254', // AWS, Azure, GCP metadata
     'fd00:ec2::254',   // AWS IPv6 metadata
   ];
-  
+
   if (metadataIPs.includes(hostname)) {
     return { valid: false, error: 'Metadata service URLs are not allowed' };
   }
@@ -92,51 +92,51 @@ export function validateCalendarUrl(urlString: string): { valid: boolean; error?
 function isAllowedIP(ip: string, version: number): boolean {
   if (version === 4) {
     const parts = ip.split('.').map(Number);
-    
+
     // Loopback (127.0.0.0/8)
     if (parts[0] === 127) return false;
-    
+
     // Private ranges
     // 10.0.0.0/8
     if (parts[0] === 10) return false;
-    
+
     // 172.16.0.0/12
     if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return false;
-    
+
     // 192.168.0.0/16
     if (parts[0] === 192 && parts[1] === 168) return false;
-    
+
     // Link-local (169.254.0.0/16)
     if (parts[0] === 169 && parts[1] === 254) return false;
-    
+
     // Multicast (224.0.0.0/4)
     if (parts[0] >= 224 && parts[0] <= 239) return false;
-    
+
     // Reserved (240.0.0.0/4)
     if (parts[0] >= 240) return false;
-    
+
     // 0.0.0.0/8
     if (parts[0] === 0) return false;
-    
+
     return true;
   } else if (version === 6) {
     const lower = ip.toLowerCase();
-    
+
     // Loopback (::1)
     if (lower === '::1') return false;
-    
+
     // Link-local (fe80::/10)
     if (lower.startsWith('fe80:')) return false;
-    
+
     // Unique local (fc00::/7)
     if (lower.startsWith('fc') || lower.startsWith('fd')) return false;
-    
+
     // IPv4-mapped IPv6 (::ffff:0:0/96)
     if (lower.includes('::ffff:')) return false;
-    
+
     return true;
   }
-  
+
   return false;
 }
 
@@ -172,7 +172,7 @@ export async function fetchWithTimeout(
       family: 4, // Force IPv4 to avoid IPv6 timeout issues in WSL
       timeout: timeoutMs,
       headers: {
-        'User-Agent': 'RPI-Kiosk/1.0',
+        'User-Agent': 'rpi-hub/1.0',
       },
     };
 

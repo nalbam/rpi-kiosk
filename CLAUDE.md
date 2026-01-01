@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RPI Kiosk is a Raspberry Pi kiosk mode display application built with Next.js 14 (App Router) and TypeScript. It displays clock, weather, calendar, and RSS news feeds in a clean, modern dashboard.
+RPI Hub is a Raspberry Pi kiosk mode display application built with Next.js 14 (App Router) and TypeScript. It displays clock, weather, calendar, and RSS news feeds in a clean, modern dashboard.
 
 ## Development Commands
 
@@ -17,7 +17,7 @@ RPI Kiosk is a Raspberry Pi kiosk mode display application built with Next.js 14
 ### Deployment Scripts
 - `./scripts/install.sh` - Automated installation for Raspberry Pi
 - `./scripts/start-kiosk.sh` - Launch kiosk mode
-- Systemd service: `scripts/rpi-kiosk.service`
+- Systemd service: `scripts/rpi-hub.service`
 
 ## Architecture
 

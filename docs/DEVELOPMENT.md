@@ -8,8 +8,8 @@
 ## Development Environment Setup
 
 ```bash
-git clone https://github.com/nalbam/rpi-kiosk.git
-cd rpi-kiosk
+git clone https://github.com/nalbam/rpi-hub.git
+cd rpi-hub
 npm install
 npm run dev
 ```

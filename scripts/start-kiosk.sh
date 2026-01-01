@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # =============================================================================
-# RPI Kiosk - Startup Script
+# RPI Hub - Startup Script
 # =============================================================================
 # This script starts the Next.js server and Chromium in kiosk mode
 #
@@ -45,7 +45,7 @@ cleanup() {
 # Main Startup
 # -----------------------------------------------------------------------------
 
-echo "Starting RPI Kiosk..."
+echo "Starting RPI Hub..."
 echo "App directory: $APP_DIR"
 
 # Step 1: Configure display

@@ -1,4 +1,4 @@
-# RPI Kiosk
+# RPI Hub
 
 Kiosk display application for Raspberry Pi. Built with Next.js and TypeScript.
 
@@ -22,8 +22,8 @@ Kiosk display application for Raspberry Pi. Built with Next.js and TypeScript.
 ## Installation
 
 ```bash
-git clone https://github.com/nalbam/rpi-kiosk.git
-cd rpi-kiosk
+git clone https://github.com/nalbam/rpi-hub.git
+cd rpi-hub
 ./scripts/install.sh
 ```
 
@@ -47,7 +47,7 @@ Automatically fetches the latest code and builds without interrupting the servic
 
 **Important**: After running update.sh, restart the service to apply changes:
 ```bash
-sudo systemctl restart rpi-kiosk
+sudo systemctl restart rpi-hub
 ```
 
 ## Uninstall
@@ -135,19 +135,19 @@ Manage settings with shell script:
 
 ```bash
 # Check status
-sudo systemctl status rpi-kiosk
+sudo systemctl status rpi-hub
 
 # Restart
-sudo systemctl restart rpi-kiosk
+sudo systemctl restart rpi-hub
 
 # View logs
-sudo journalctl -u rpi-kiosk -f
+sudo journalctl -u rpi-hub -f
 
 # Stop
-sudo systemctl stop rpi-kiosk
+sudo systemctl stop rpi-hub
 
 # Start
-sudo systemctl start rpi-kiosk
+sudo systemctl start rpi-hub
 ```
 
 ## Development
