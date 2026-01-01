@@ -170,9 +170,10 @@ export default function LocationSettings({
         detectLocationByIP(),
       ]);
 
-      // Combine the best data from both sources
+      // Priority: GPS > IP-based location
+      // GPS provides more accurate coordinates and city (via reverse geocoding)
       let finalCoords = gpsCoords || (ipLocation ? { lat: ipLocation.lat, lon: ipLocation.lon } : null);
-      let finalCity = ipLocation?.city || null;
+      let finalCity: string | null = null;
       let finalTimezone = ipLocation?.timezone || null;
 
       if (!finalCoords) {
@@ -181,8 +182,8 @@ export default function LocationSettings({
         return;
       }
 
-      // If we have GPS coords, try reverse geocoding to get a better city name
-      if (gpsCoords && !finalCity) {
+      // If we have GPS coords, try reverse geocoding to get city name (GPS prioritized)
+      if (gpsCoords) {
         try {
           const response = await fetch(`/api/reverse-geocoding?lat=${gpsCoords.lat}&lon=${gpsCoords.lon}`);
           if (response.ok) {
@@ -192,6 +193,11 @@ export default function LocationSettings({
         } catch (error) {
           console.error('Reverse geocoding failed:', error);
         }
+      }
+
+      // Fallback to IP-based city if GPS reverse geocoding failed
+      if (!finalCity && ipLocation?.city) {
+        finalCity = ipLocation.city;
       }
 
       // If we still don't have timezone, try forward geocoding with the city name
