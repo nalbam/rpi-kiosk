@@ -316,13 +316,23 @@ export default function SettingsPage() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm font-medium">Coordinates</label>
-                  <button
-                    onClick={handleDetectLocation}
-                    disabled={detectingLocation}
-                    className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded transition-colors"
-                  >
-                    {detectingLocation ? 'Detecting...' : detectedCoordinates ? `Detected: ${detectedCoordinates.lat.toFixed(4)}, ${detectedCoordinates.lon.toFixed(4)}` : 'Detect Location'}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleDetectLocation}
+                      disabled={detectingLocation}
+                      className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded transition-colors"
+                    >
+                      {detectingLocation ? 'Detecting...' : detectedCoordinates ? `Detected: ${detectedCoordinates.lat.toFixed(4)}, ${detectedCoordinates.lon.toFixed(4)}` : 'Detect Location'}
+                    </button>
+                    <a
+                      href={`https://www.google.com/maps?q=${config.weatherLocation.lat},${config.weatherLocation.lon}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1 text-xs bg-purple-600 hover:bg-purple-700 rounded transition-colors"
+                    >
+                      View on Google Maps
+                    </a>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
