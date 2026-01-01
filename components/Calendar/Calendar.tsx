@@ -115,6 +115,35 @@ export default function Calendar() {
           const endDate = new Date(event.end);
           const isSingleDay = isSameDay(startDate, endDate);
 
+          // Check if it's an all-day event
+          // All-day events typically start at 00:00 and end at 00:00 of the next day(s)
+          const isAllDayEvent =
+            startDate.getHours() === 0 &&
+            startDate.getMinutes() === 0 &&
+            endDate.getHours() === 0 &&
+            endDate.getMinutes() === 0;
+
+          // Calculate duration in days for multi-day all-day events
+          const daysDiff = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+          let timeDisplay = '';
+          if (isAllDayEvent) {
+            if (daysDiff === 1) {
+              // Single day all-day event
+              timeDisplay = '종일';
+            } else {
+              // Multi-day all-day event
+              timeDisplay = `${format(startDate, 'MM/dd')} - ${format(new Date(endDate.getTime() - 1), 'MM/dd')} (${daysDiff}일간)`;
+            }
+          } else {
+            // Regular timed event
+            if (isSingleDay) {
+              timeDisplay = `${format(startDate, 'HH:mm')} - ${format(endDate, 'HH:mm')}`;
+            } else {
+              timeDisplay = `${format(startDate, 'MM/dd HH:mm')} - ${format(endDate, 'MM/dd HH:mm')}`;
+            }
+          }
+
           return (
             <div key={index} className="border-l-4 border-blue-500 pl-4 py-2">
               <div className="flex justify-between items-start mb-1">
@@ -122,9 +151,7 @@ export default function Calendar() {
                 <div className="text-sm text-gray-400">{getDateLabel(event.start)}</div>
               </div>
               <div className="text-sm text-gray-400">
-                {format(startDate, 'HH:mm')}
-                {!isSingleDay && ` - ${format(endDate, 'MM/dd HH:mm')}`}
-                {isSingleDay && endDate.getTime() !== startDate.getTime() && ` - ${format(endDate, 'HH:mm')}`}
+                {timeDisplay}
               </div>
               {event.location && (
                 <div className="text-sm text-gray-500 mt-1">📍 {event.location}</div>
