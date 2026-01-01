@@ -34,7 +34,7 @@ fi
 
 # Start Next.js application in development mode (change to production as needed)
 cd /home/pi/rpi-kiosk
-npm run build
+# npm run build
 npm start &
 
 # Wait for the server to start
