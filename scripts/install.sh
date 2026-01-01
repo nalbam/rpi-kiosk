@@ -53,6 +53,11 @@ fi
 # Install application dependencies
 echo "[4/6] Installing npm dependencies..."
 cd "$INSTALL_DIR"
+
+# Pull latest changes
+echo "  - Pulling latest code from git..."
+git pull || echo "  - Warning: git pull failed (may not be a git repository)"
+
 npm install --legacy-peer-deps
 
 # Build the application

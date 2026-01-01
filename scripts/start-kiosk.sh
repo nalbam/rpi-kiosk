@@ -83,7 +83,11 @@ $CHROMIUM_CMD \
   --kiosk \
   --check-for-update-interval=31536000 \
   --disable-session-crashed-bubble \
-  --disable-features=TranslateUI \
+  --disable-restore-session-state \
+  --disable-translate \
+  --disable-features=Translate,TranslateUI,PasswordManager \
+  --password-store=basic \
+  --disable-component-update \
   http://localhost:3000
 
 # Cleanup when Chromium exits
