@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import { PROCESSING_LIMITS } from '@/lib/constants';
 import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
 import { useAutoRefresh } from '@/lib/hooks/useAutoRefresh';
 import { WidgetContainer } from '@/components/shared/WidgetContainer';
-import { PROCESSING_LIMITS } from '@/lib/constants';
 
 interface RSSItem {
   title: string;
@@ -44,8 +44,14 @@ export default function RSS() {
 
       if (response.ok) {
         const data = await response.json();
-        setItems(data.items);
-        setError(false);
+        // Validate response structure
+        if (data && Array.isArray(data.items)) {
+          setItems(data.items);
+          setError(false);
+        } else {
+          console.error('Invalid RSS response structure:', data);
+          setError(true);
+        }
       } else {
         setError(true);
       }

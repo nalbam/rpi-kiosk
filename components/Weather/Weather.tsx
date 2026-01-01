@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, Thermometer } from 'lucide-react';
 import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
 import { useAutoRefresh } from '@/lib/hooks/useAutoRefresh';
 import { WidgetContainer } from '@/components/shared/WidgetContainer';
-import { Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, Thermometer } from 'lucide-react';
 
 interface WeatherData {
   temperature: number;
@@ -37,8 +37,14 @@ export default function Weather() {
 
       if (response.ok) {
         const data = await response.json();
-        setWeather(data);
-        setError(false);
+        // Validate response structure
+        if (data && typeof data.temperature === 'number' && typeof data.weatherCode === 'number') {
+          setWeather(data);
+          setError(false);
+        } else {
+          console.error('Invalid weather response structure:', data);
+          setError(true);
+        }
       } else {
         setError(true);
       }

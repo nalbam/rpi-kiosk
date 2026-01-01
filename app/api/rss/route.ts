@@ -1,22 +1,31 @@
-import { NextResponse } from 'next/server';
 import Parser from 'rss-parser';
 import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
 import { API, PROCESSING_LIMITS } from '@/lib/constants';
+import {
+  createErrorResponse,
+  createValidationError,
+  createSuccessResponse,
+} from '@/lib/apiHelpers';
+
+interface RSSItem {
+  title: string;
+  link: string;
+  pubDate: string;
+  source: string;
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const feedUrls = searchParams.get('urls');
 
+  // Get and validate required parameter
+  const feedUrls = searchParams.get('urls');
   if (!feedUrls) {
-    return NextResponse.json(
-      { error: 'Missing feed URLs' },
-      { status: 400 }
-    );
+    return createValidationError('Missing feed URLs');
   }
 
   try {
     const urls = feedUrls.split(',');
-    const allItems: any[] = [];
+    const allItems: RSSItem[] = [];
     let successCount = 0;
     let failCount = 0;
 
@@ -56,10 +65,7 @@ export async function GET(request: Request) {
 
     // If all feeds failed, return an error
     if (successCount === 0 && urls.length > 0) {
-      return NextResponse.json(
-        { error: 'All RSS feeds failed to load' },
-        { status: 500 }
-      );
+      return createErrorResponse('All RSS feeds failed to load');
     }
 
     // Sort by date and limit total items
@@ -67,12 +73,8 @@ export async function GET(request: Request) {
       .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
       .slice(0, PROCESSING_LIMITS.MAX_RSS_ITEMS_TOTAL);
 
-    return NextResponse.json({ items: sortedItems });
+    return createSuccessResponse({ items: sortedItems });
   } catch (error) {
-    console.error('RSS API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch RSS feeds' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch RSS feeds', error);
   }
 }

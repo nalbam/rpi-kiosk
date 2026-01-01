@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { format, isSameDay, isToday, isTomorrow } from 'date-fns';
+import { MapPin } from 'lucide-react';
 import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
 import { useAutoRefresh } from '@/lib/hooks/useAutoRefresh';
 import { WidgetContainer } from '@/components/shared/WidgetContainer';
-import { MapPin } from 'lucide-react';
 
 interface CalendarEvent {
   title: string;
@@ -60,8 +60,14 @@ export default function Calendar() {
 
       if (response.ok) {
         const data = await response.json();
-        setEvents(data.events);
-        setError(false);
+        // Validate response structure
+        if (data && Array.isArray(data.events)) {
+          setEvents(data.events);
+          setError(false);
+        } else {
+          console.error('Invalid calendar response structure:', data);
+          setError(true);
+        }
       } else {
         setError(true);
       }

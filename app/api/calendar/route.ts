@@ -1,26 +1,34 @@
-import { NextResponse } from 'next/server';
 import ICAL from 'ical.js';
 import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
 import { API, PROCESSING_LIMITS } from '@/lib/constants';
+import {
+  createErrorResponse,
+  createValidationError,
+  createSuccessResponse,
+  handleValidation,
+} from '@/lib/apiHelpers';
+
+interface CalendarEvent {
+  title: string;
+  start: Date;
+  end: Date;
+  description: string;
+  location: string;
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const calendarUrl = searchParams.get('url');
 
+  // Get and validate required parameter
+  const calendarUrl = searchParams.get('url');
   if (!calendarUrl) {
-    return NextResponse.json(
-      { error: 'Missing calendar URL' },
-      { status: 400 }
-    );
+    return createValidationError('Missing calendar URL');
   }
 
   // Validate URL to prevent SSRF attacks
-  const validation = validateCalendarUrl(calendarUrl);
-  if (!validation.valid) {
-    return NextResponse.json(
-      { error: validation.error || 'Invalid calendar URL' },
-      { status: 400 }
-    );
+  const validationError = handleValidation(validateCalendarUrl(calendarUrl));
+  if (validationError) {
+    return validationError;
   }
 
   try {
@@ -40,8 +48,8 @@ export async function GET(request: Request) {
     const oneMonthFromNow = new Date();
     oneMonthFromNow.setDate(now.getDate() + PROCESSING_LIMITS.CALENDAR_DAYS_AHEAD);
 
-    const events = vevents
-      .map((vevent: any) => {
+    const events: CalendarEvent[] = vevents
+      .map((vevent: ICAL.Component): CalendarEvent => {
         const event = new ICAL.Event(vevent);
         return {
           title: event.summary,
@@ -51,18 +59,14 @@ export async function GET(request: Request) {
           location: event.location || '',
         };
       })
-      .filter((event: any) => {
+      .filter((event: CalendarEvent) => {
         // Show events that haven't ended yet and start within the next month
         return event.end >= now && event.start <= oneMonthFromNow;
       })
-      .sort((a: any, b: any) => a.start.getTime() - b.start.getTime());
+      .sort((a: CalendarEvent, b: CalendarEvent) => a.start.getTime() - b.start.getTime());
 
-    return NextResponse.json({ events });
+    return createSuccessResponse({ events });
   } catch (error) {
-    console.error('Calendar API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch calendar data' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch calendar data', error);
   }
 }

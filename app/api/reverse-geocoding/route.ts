@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
 import { fetchWithTimeout } from '@/lib/urlValidation';
 import { validateCoordinates } from '@/lib/validation';
 import { API } from '@/lib/constants';
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  handleValidation,
+} from '@/lib/apiHelpers';
 
 export interface ReverseGeocodingResult {
   city?: string;
@@ -16,15 +20,10 @@ export async function GET(request: Request) {
   const lon = searchParams.get('lon');
 
   // Validate coordinates
-  const validation = validateCoordinates(lat, lon);
-  if (!validation.valid) {
-    return NextResponse.json(
-      { error: validation.error },
-      { status: 400 }
-    );
+  const validationError = handleValidation(validateCoordinates(lat, lon));
+  if (validationError) {
+    return validationError;
   }
-
-  const { lat: latNum, lon: lonNum } = validation;
 
   try {
     // Using Nominatim (OpenStreetMap) reverse geocoding API
@@ -65,12 +64,8 @@ export async function GET(request: Request) {
       displayName: displayName || 'Unknown Location',
     };
 
-    return NextResponse.json(result);
+    return createSuccessResponse(result);
   } catch (error) {
-    console.error('Reverse geocoding API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch reverse geocoding data' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch reverse geocoding data', error);
   }
 }

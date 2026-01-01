@@ -1,7 +1,11 @@
-import { NextResponse } from 'next/server';
 import { fetchWithTimeout } from '@/lib/urlValidation';
 import { validateCoordinates } from '@/lib/validation';
 import { API } from '@/lib/constants';
+import {
+  createErrorResponse,
+  createSuccessResponse,
+  handleValidation,
+} from '@/lib/apiHelpers';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -9,15 +13,10 @@ export async function GET(request: Request) {
   const lon = searchParams.get('lon');
 
   // Validate coordinates
-  const validation = validateCoordinates(lat, lon);
-  if (!validation.valid) {
-    return NextResponse.json(
-      { error: validation.error },
-      { status: 400 }
-    );
+  const validationError = handleValidation(validateCoordinates(lat, lon));
+  if (validationError) {
+    return validationError;
   }
-
-  const { lat: latNum, lon: lonNum } = validation;
 
   try {
     // Using Open-Meteo API (free, no API key required)
@@ -64,7 +63,7 @@ export async function GET(request: Request) {
     const weatherCode = data.current.weather_code;
     const weatherDescription = weatherCodeMap[weatherCode] || 'Unknown';
 
-    return NextResponse.json({
+    return createSuccessResponse({
       temperature: Math.round(data.current.temperature_2m),
       humidity: data.current.relative_humidity_2m,
       windSpeed: data.current.wind_speed_10m,
@@ -72,10 +71,6 @@ export async function GET(request: Request) {
       weatherCode: weatherCode,
     });
   } catch (error) {
-    console.error('Weather API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch weather data' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch weather data', error);
   }
 }

@@ -2,27 +2,28 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Settings } from 'lucide-react';
 import { initializeConfig } from '@/lib/storage';
-import { Settings, CheckCircle, X } from 'lucide-react';
 import Clock from '@/components/Clock/Clock';
 import Weather from '@/components/Weather/Weather';
 import Calendar from '@/components/Calendar/Calendar';
 import RSS from '@/components/RSS/RSS';
+import Toast from '@/components/shared/Toast';
 
 // Toast handler component that uses useSearchParams
 function ToastHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [toast, setToast] = useState<{ message: string; type: 'success' } | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Handle toast messages from URL parameters
   useEffect(() => {
     const message = searchParams.get('message');
 
     if (message === 'saved') {
-      setToast({ message: 'Settings saved successfully', type: 'success' });
+      setToastMessage('Settings saved successfully');
     } else if (message === 'reset') {
-      setToast({ message: 'Settings reset to defaults', type: 'success' });
+      setToastMessage('Settings reset to defaults');
     }
 
     // Clear URL parameters
@@ -31,31 +32,15 @@ function ToastHandler() {
     }
   }, [searchParams, router]);
 
-  // Auto-hide toast after 3 seconds
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => {
-        setToast(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-
-  if (!toast) return null;
+  if (!toastMessage) return null;
 
   return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
-      <div className="flex items-center gap-3 px-6 py-3 rounded-lg shadow-lg border bg-green-600 border-green-500">
-        <CheckCircle className="w-5 h-5 flex-shrink-0" />
-        <span className="font-medium">{toast.message}</span>
-        <button
-          onClick={() => setToast(null)}
-          className="ml-2 hover:bg-white/20 rounded p-1 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
+    <Toast
+      message={toastMessage}
+      type="success"
+      duration={3000}
+      onClose={() => setToastMessage(null)}
+    />
   );
 }
 

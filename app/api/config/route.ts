@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { defaultConfig } from '@/lib/config';
 import { mergeConfigWithDefaults } from '@/lib/configHelpers';
 import type { KioskConfig } from '@/lib/config';
+import {
+  createErrorResponse,
+  createValidationError,
+  createSuccessResponse,
+} from '@/lib/apiHelpers';
 
 /**
  * GET /api/config
@@ -21,15 +25,15 @@ export async function GET() {
       // Merge with default config to ensure all required fields exist
       const config = mergeConfigWithDefaults(fileConfig);
 
-      return NextResponse.json(config);
+      return createSuccessResponse(config);
     }
 
     // If no config.json, return default config with _initialized: false
-    return NextResponse.json({ ...defaultConfig, _initialized: false });
+    return createSuccessResponse({ ...defaultConfig, _initialized: false });
   } catch (error) {
     console.error('Failed to read config.json:', error);
     // On error, return default config
-    return NextResponse.json({ ...defaultConfig, _initialized: false });
+    return createSuccessResponse({ ...defaultConfig, _initialized: false });
   }
 }
 
@@ -43,10 +47,7 @@ export async function POST(request: Request) {
 
     // Validate config structure
     if (!config || typeof config !== 'object') {
-      return NextResponse.json(
-        { error: 'Invalid configuration data' },
-        { status: 400 }
-      );
+      return createValidationError('Invalid configuration data');
     }
 
     // Merge with default config to ensure all required fields
@@ -58,12 +59,8 @@ export async function POST(request: Request) {
     writeFileSync(configPath, JSON.stringify(fullConfig, null, 2), 'utf-8');
 
     console.log('Configuration saved to config.json');
-    return NextResponse.json({ success: true, config: fullConfig });
+    return createSuccessResponse({ success: true, config: fullConfig });
   } catch (error) {
-    console.error('Failed to save config.json:', error);
-    return NextResponse.json(
-      { error: 'Failed to save configuration' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to save configuration', error);
   }
 }

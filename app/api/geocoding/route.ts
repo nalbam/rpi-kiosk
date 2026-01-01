@@ -1,8 +1,22 @@
-import { NextResponse } from 'next/server';
 import { fetchWithTimeout } from '@/lib/urlValidation';
 import { API } from '@/lib/constants';
+import {
+  createErrorResponse,
+  createValidationError,
+  createSuccessResponse,
+} from '@/lib/apiHelpers';
 
 export interface GeocodingResult {
+  name: string;
+  latitude: number;
+  longitude: number;
+  country: string;
+  admin1?: string;
+  admin2?: string;
+  timezone?: string;
+}
+
+interface OpenMeteoGeocodingResult {
   name: string;
   latitude: number;
   longitude: number;
@@ -17,18 +31,12 @@ export async function GET(request: Request) {
   const query = searchParams.get('q');
 
   if (!query || query.trim().length === 0) {
-    return NextResponse.json(
-      { error: 'Missing query parameter' },
-      { status: 400 }
-    );
+    return createValidationError('Missing query parameter');
   }
 
   // Validate query length
   if (query.length > 100) {
-    return NextResponse.json(
-      { error: 'Query too long (max 100 characters)' },
-      { status: 400 }
-    );
+    return createValidationError('Query too long (max 100 characters)');
   }
 
   try {
@@ -48,11 +56,11 @@ export async function GET(request: Request) {
 
     // Return empty array if no results
     if (!data.results || data.results.length === 0) {
-      return NextResponse.json({ results: [] });
+      return createSuccessResponse({ results: [] });
     }
 
     // Map results to a simpler format
-    const results: GeocodingResult[] = data.results.map((result: any) => ({
+    const results: GeocodingResult[] = data.results.map((result: OpenMeteoGeocodingResult) => ({
       name: result.name,
       latitude: result.latitude,
       longitude: result.longitude,
@@ -62,12 +70,8 @@ export async function GET(request: Request) {
       timezone: result.timezone,
     }));
 
-    return NextResponse.json({ results });
+    return createSuccessResponse({ results });
   } catch (error) {
-    console.error('Geocoding API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch geocoding data' },
-      { status: 500 }
-    );
+    return createErrorResponse('Failed to fetch geocoding data', error);
   }
 }

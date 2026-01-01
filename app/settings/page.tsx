@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Search, MapPin, Clock, Sparkles, Map, Navigation } from 'lucide-react';
 import { getConfig, saveConfig, detectBrowserSettings, detectGeolocation, detectLocationByIP } from '@/lib/storage';
 import { KioskConfig, DATE_FORMAT_OPTIONS, defaultConfig } from '@/lib/config';
 import { API } from '@/lib/constants';
 import { GeocodingResult } from '@/app/api/geocoding/route';
-import { Search, MapPin, Clock, Sparkles, Map, Navigation, XCircle, X } from 'lucide-react';
+import Toast from '@/components/shared/Toast';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -112,15 +113,6 @@ export default function SettingsPage() {
     };
   }, []);
 
-  // Auto-hide error toast after 5 seconds
-  useEffect(() => {
-    if (errorToast) {
-      const timer = setTimeout(() => {
-        setErrorToast(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [errorToast]);
 
   const handleSave = async () => {
     if (config) {
@@ -372,18 +364,12 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8 overflow-x-hidden">
       {/* Error Toast */}
       {errorToast && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-3 px-6 py-3 rounded-lg shadow-lg border bg-red-600 border-red-500">
-            <XCircle className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">{errorToast}</span>
-            <button
-              onClick={() => setErrorToast(null)}
-              className="ml-2 hover:bg-white/20 rounded p-1 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        <Toast
+          message={errorToast}
+          type="error"
+          duration={5000}
+          onClose={() => setErrorToast(null)}
+        />
       )}
 
       <div className="max-w-4xl mx-auto w-full">
