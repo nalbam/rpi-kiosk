@@ -17,10 +17,12 @@ export default function RSS() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [displayLimit, setDisplayLimit] = useState(7);
 
   const fetchRSS = async () => {
     try {
-      const config = getConfig();
+      const config = await getConfig();
+      setDisplayLimit(config.displayLimits.rssItems);
 
       if (config.rssFeeds.length === 0) {
         setLoading(false);
@@ -49,10 +51,20 @@ export default function RSS() {
   useEffect(() => {
     fetchRSS();
 
-    const config = getConfig();
-    const interval = setInterval(fetchRSS, config.refreshIntervals.rss * 60 * 1000);
+    async function setupInterval() {
+      const config = await getConfig();
+      const interval = setInterval(fetchRSS, config.refreshIntervals.rss * 60 * 1000);
+      return interval;
+    }
 
-    return () => clearInterval(interval);
+    let intervalId: NodeJS.Timeout;
+    setupInterval().then((id) => {
+      intervalId = id;
+    });
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
 
   // Auto-scroll through news items
@@ -88,15 +100,10 @@ export default function RSS() {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
         <h2 className="text-vw-xl font-semibold mb-vw-sm">News</h2>
-        <div className="text-gray-400 text-vw-sm">
-          {getConfig().rssFeeds.length === 0 ? 'Add RSS feeds in settings' : 'No news items'}
-        </div>
+        <div className="text-gray-400 text-vw-sm">No news items</div>
       </div>
     );
   }
-
-  const config = getConfig();
-  const displayLimit = config.displayLimits.rssItems;
 
   const displayItems = items.length > 0
     ? Array.from({ length: Math.min(displayLimit, items.length) }).map((_, i) => items[(currentIndex + i) % items.length])

@@ -19,7 +19,7 @@ export default function Weather() {
 
   const fetchWeather = async () => {
     try {
-      const config = getConfig();
+      const config = await getConfig();
       setCity(config.weatherLocation.city);
 
       const response = await fetch(
@@ -44,10 +44,20 @@ export default function Weather() {
   useEffect(() => {
     fetchWeather();
 
-    const config = getConfig();
-    const interval = setInterval(fetchWeather, config.refreshIntervals.weather * 60 * 1000);
+    async function setupInterval() {
+      const config = await getConfig();
+      const interval = setInterval(fetchWeather, config.refreshIntervals.weather * 60 * 1000);
+      return interval;
+    }
 
-    return () => clearInterval(interval);
+    let intervalId: NodeJS.Timeout;
+    setupInterval().then((id) => {
+      intervalId = id;
+    });
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
 
   if (loading) {

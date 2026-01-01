@@ -18,9 +18,12 @@ export default function Clock() {
   const [dateFormat, setDateFormat] = useState('EEEE, MMMM dd, yyyy');
 
   useEffect(() => {
-    const config = getConfig();
-    setTimezone(config.timezone);
-    setDateFormat(config.dateFormat || 'EEEE, MMMM dd, yyyy');
+    async function loadConfig() {
+      const config = await getConfig();
+      setTimezone(config.timezone);
+      setDateFormat(config.dateFormat || 'EEEE, MMMM dd, yyyy');
+    }
+    loadConfig();
   }, []);
 
   useEffect(() => {

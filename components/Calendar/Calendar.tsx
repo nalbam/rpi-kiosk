@@ -16,10 +16,12 @@ export default function Calendar() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [displayLimit, setDisplayLimit] = useState(5);
 
   const fetchCalendar = async () => {
     try {
-      const config = getConfig();
+      const config = await getConfig();
+      setDisplayLimit(config.displayLimits.calendarEvents);
 
       if (!config.calendarUrl) {
         setLoading(false);
@@ -64,10 +66,20 @@ export default function Calendar() {
   useEffect(() => {
     fetchCalendar();
 
-    const config = getConfig();
-    const interval = setInterval(fetchCalendar, config.refreshIntervals.calendar * 60 * 1000);
+    async function setupInterval() {
+      const config = await getConfig();
+      const interval = setInterval(fetchCalendar, config.refreshIntervals.calendar * 60 * 1000);
+      return interval;
+    }
 
-    return () => clearInterval(interval);
+    let intervalId: NodeJS.Timeout;
+    setupInterval().then((id) => {
+      intervalId = id;
+    });
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
 
   const getDateLabel = (dateStr: string) => {
@@ -99,15 +111,11 @@ export default function Calendar() {
     return (
       <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
         <h2 className="text-vw-xl font-semibold mb-vw-sm">Calendar</h2>
-        <div className="text-gray-400 text-vw-sm">
-          {getConfig().calendarUrl ? 'No upcoming events' : 'Add calendar URL in settings'}
-        </div>
+        <div className="text-gray-400 text-vw-sm">No upcoming events</div>
       </div>
     );
   }
 
-  const config = getConfig();
-  const displayLimit = config.displayLimits.calendarEvents;
   const displayEvents = events.slice(0, displayLimit);
 
   return (

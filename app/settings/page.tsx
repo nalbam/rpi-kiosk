@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getConfig, saveConfig, resetConfig, reloadConfigFromFile } from '@/lib/storage';
-import { KioskConfig, DATE_FORMAT_OPTIONS } from '@/lib/config';
+import { getConfig, saveConfig, detectBrowserSettings, detectGeolocation } from '@/lib/storage';
+import { KioskConfig, DATE_FORMAT_OPTIONS, defaultConfig } from '@/lib/config';
 import { API } from '@/lib/constants';
 
 export default function SettingsPage() {
@@ -16,10 +16,13 @@ export default function SettingsPage() {
   const [detectedCoordinates, setDetectedCoordinates] = useState<{ lat: number; lon: number } | null>(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
 
-  // Load configuration
+  // Load configuration from server
   useEffect(() => {
-    const currentConfig = getConfig();
-    setConfig(currentConfig);
+    async function loadConfig() {
+      const currentConfig = await getConfig();
+      setConfig(currentConfig);
+    }
+    loadConfig();
   }, []);
 
   // Load available timezones
@@ -87,9 +90,9 @@ export default function SettingsPage() {
     };
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (config) {
-      const result = saveConfig(config);
+      const result = await saveConfig(config);
       if (result.success) {
         alert('Settings saved successfully');
         router.push('/');
@@ -99,24 +102,14 @@ export default function SettingsPage() {
     }
   };
 
-  const handleReset = () => {
-    if (confirm('Are you sure you want to reset all settings?')) {
-      resetConfig();
-      const defaultConfig = getConfig();
-      setConfig(defaultConfig);
-      alert('Settings have been reset');
-    }
-  };
-
-  const handleReloadFromFile = async () => {
-    if (confirm('Do you want to reload settings from config.json on the server?\nCurrent changes will be overwritten.')) {
-      const result = await reloadConfigFromFile();
+  const handleReset = async () => {
+    if (confirm('Are you sure you want to reset all settings to default values?')) {
+      const result = await saveConfig(defaultConfig);
       if (result.success) {
-        const reloadedConfig = getConfig();
-        setConfig(reloadedConfig);
-        alert('Settings reloaded from server');
+        setConfig(defaultConfig);
+        alert('Settings have been reset to default values');
       } else {
-        alert(`Failed to reload settings: ${result.error}`);
+        alert(`Failed to reset settings: ${result.error}`);
       }
     }
   };
@@ -128,37 +121,25 @@ export default function SettingsPage() {
     }
 
     setDetectingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const coords = {
-          lat: position.coords.latitude,
-          lon: position.coords.longitude,
-        };
-        setDetectedCoordinates(coords);
-        setDetectingLocation(false);
+    const coords = await detectGeolocation();
+    setDetectingLocation(false);
 
-        // Automatically apply detected coordinates
-        if (config) {
-          setConfig({
-            ...config,
-            weatherLocation: {
-              ...config.weatherLocation,
-              lat: coords.lat,
-              lon: coords.lon,
-            },
-          });
-        }
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        setDetectingLocation(false);
-        alert(`Failed to detect location: ${error.message}`);
-      },
-      {
-        timeout: API.TIMEOUT_MS,
-        maximumAge: 0,
+    if (coords) {
+      setDetectedCoordinates(coords);
+      // Automatically apply detected coordinates
+      if (config) {
+        setConfig({
+          ...config,
+          weatherLocation: {
+            ...config.weatherLocation,
+            lat: coords.lat,
+            lon: coords.lon,
+          },
+        });
       }
-    );
+    } else {
+      alert('Failed to detect location. Please enable location permissions.');
+    }
   };
 
   const handleApplyDetectedTimezone = () => {
@@ -553,33 +534,24 @@ export default function SettingsPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-8 space-y-4">
+        <div className="mt-8">
           <div className="flex gap-4">
             <button
               onClick={handleSave}
               className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition-colors"
             >
-              Save
+              Save to Server
             </button>
             <button
               onClick={handleReset}
               className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-lg font-semibold transition-colors"
             >
-              Reset
+              Reset to Defaults
             </button>
           </div>
-
-          <div className="border-t border-gray-700 pt-4">
-            <button
-              onClick={handleReloadFromFile}
-              className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
-            >
-              📄 Reload from Server Config File (config.json)
-            </button>
-            <p className="text-xs text-gray-500 mt-2 text-center">
-              Use this button to reload settings from config.json if you modified it on the server
-            </p>
-          </div>
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Settings are saved to config.json on the server
+          </p>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { defaultConfig } from '@/lib/config';
 import type { KioskConfig } from '@/lib/config';
@@ -38,11 +38,61 @@ export async function GET() {
       return NextResponse.json(config);
     }
 
-    // If no config.json, return default config
-    return NextResponse.json(defaultConfig);
+    // If no config.json, return default config with _initialized: false
+    return NextResponse.json({ ...defaultConfig, _initialized: false });
   } catch (error) {
     console.error('Failed to read config.json:', error);
     // On error, return default config
-    return NextResponse.json(defaultConfig);
+    return NextResponse.json({ ...defaultConfig, _initialized: false });
+  }
+}
+
+/**
+ * POST /api/config
+ * Saves configuration to config.json file
+ */
+export async function POST(request: Request) {
+  try {
+    const config = await request.json();
+
+    // Validate config structure
+    if (!config || typeof config !== 'object') {
+      return NextResponse.json(
+        { error: 'Invalid configuration data' },
+        { status: 400 }
+      );
+    }
+
+    // Merge with default config to ensure all required fields
+    const fullConfig: KioskConfig = {
+      ...defaultConfig,
+      ...config,
+      weatherLocation: {
+        ...defaultConfig.weatherLocation,
+        ...config.weatherLocation,
+      },
+      refreshIntervals: {
+        ...defaultConfig.refreshIntervals,
+        ...config.refreshIntervals,
+      },
+      displayLimits: {
+        ...defaultConfig.displayLimits,
+        ...config.displayLimits,
+      },
+    };
+
+    const configPath = join(process.cwd(), 'config.json');
+
+    // Write to config.json
+    writeFileSync(configPath, JSON.stringify(fullConfig, null, 2), 'utf-8');
+
+    console.log('Configuration saved to config.json');
+    return NextResponse.json({ success: true, config: fullConfig });
+  } catch (error) {
+    console.error('Failed to save config.json:', error);
+    return NextResponse.json(
+      { error: 'Failed to save configuration' },
+      { status: 500 }
+    );
   }
 }
