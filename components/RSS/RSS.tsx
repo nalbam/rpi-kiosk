@@ -25,7 +25,6 @@ export default function RSS() {
 
       // Check if config is not yet initialized (first visit)
       if ((config as any)._initialized === false && retryCount < maxRetries) {
-        console.log(`Config not initialized yet, retrying RSS fetch in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`);
         setTimeout(() => {
           fetchRSS(retryCount + 1, maxRetries, retryDelay);
         }, retryDelay);
@@ -34,7 +33,7 @@ export default function RSS() {
 
       // Warn if max retries reached with uninitialized config
       if ((config as any)._initialized === false) {
-        console.warn('RSS: Config initialization timeout - using default values');
+        console.warn('RSS: Config initialization timeout');
       }
 
       setDisplayLimit(config.displayLimits.rssItems);
@@ -52,7 +51,6 @@ export default function RSS() {
         const data = await response.json();
         setItems(data.items);
         setError(false);
-        console.log('RSS data loaded successfully, feeds:', config.rssFeeds.length);
       } else {
         setError(true);
       }

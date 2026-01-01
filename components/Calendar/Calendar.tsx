@@ -25,7 +25,6 @@ export default function Calendar() {
 
       // Check if config is not yet initialized (first visit)
       if ((config as any)._initialized === false && retryCount < maxRetries) {
-        console.log(`Config not initialized yet, retrying calendar fetch in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`);
         setTimeout(() => {
           fetchCalendar(retryCount + 1, maxRetries, retryDelay);
         }, retryDelay);
@@ -34,14 +33,13 @@ export default function Calendar() {
 
       // Warn if max retries reached with uninitialized config
       if ((config as any)._initialized === false) {
-        console.warn('Calendar: Config initialization timeout - using default values');
+        console.warn('Calendar: Config initialization timeout');
       }
 
       setDisplayLimit(config.displayLimits.calendarEvents);
 
       if (!config.calendarUrl) {
         setLoading(false);
-        console.log('Calendar: No calendar URL configured');
         return;
       }
 
@@ -69,7 +67,6 @@ export default function Calendar() {
         const data = await response.json();
         setEvents(data.events);
         setError(false);
-        console.log('Calendar data loaded successfully, events:', data.events.length);
       } else {
         setError(true);
       }

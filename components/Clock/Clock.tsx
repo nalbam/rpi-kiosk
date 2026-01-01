@@ -29,7 +29,6 @@ export default function Clock() {
       // Check if config is not yet initialized (first visit)
       if ((config as any)._initialized === false && retryCount < maxRetries) {
         retryCount++;
-        console.log(`Config not initialized yet, retrying in ${retryDelay}ms... (${retryCount}/${maxRetries})`);
         setTimeout(() => {
           if (isMounted) {
             loadConfig();
@@ -43,9 +42,7 @@ export default function Clock() {
         setTimezone(config.timezone);
         setDateFormat(config.dateFormat || 'EEEE, MMMM dd, yyyy');
         if ((config as any)._initialized === false) {
-          console.warn('Config initialization timeout - using default values');
-        } else {
-          console.log('Config loaded successfully:', config.timezone);
+          console.warn('Clock: Config initialization timeout');
         }
       }
     }

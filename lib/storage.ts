@@ -79,14 +79,12 @@ export function detectBrowserSettings(): Partial<KioskConfig> {
   // Timezone detection
   try {
     timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    console.log('Browser timezone detected:', timezone);
   } catch (error) {
     console.error('Failed to detect browser timezone:', error);
     // Fallback: try to detect from Date
     try {
       const offset = -new Date().getTimezoneOffset();
       timezone = `UTC${offset >= 0 ? '+' : ''}${offset / 60}`;
-      console.log('Using timezone offset fallback:', timezone);
     } catch {
       // Last resort: use UTC
       timezone = 'UTC';
@@ -108,7 +106,7 @@ export function detectBrowserSettings(): Partial<KioskConfig> {
   const { language, country } = detectLanguageAndCountry();
   const rssFeeds = [generateGoogleNewsRSS(language, country)];
 
-  const result = {
+  return {
     timezone,
     weatherLocation: {
       ...defaultConfig.weatherLocation,
@@ -116,9 +114,6 @@ export function detectBrowserSettings(): Partial<KioskConfig> {
     },
     rssFeeds,
   };
-
-  console.log('Browser settings detected:', result);
-  return result;
 }
 
 /**
@@ -176,10 +171,15 @@ export async function detectLocationByIP(): Promise<{ lat: number; lon: number; 
   }
 
   try {
-    console.log('Attempting IP-based location detection...');
+    // Create abort controller for timeout (compatible with older browsers)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API.TIMEOUT_MS);
+
     const response = await fetch('https://ipapi.co/json/', {
-      signal: AbortSignal.timeout(API.TIMEOUT_MS),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (response.ok) {
       const data = await response.json();
@@ -194,11 +194,11 @@ export async function detectLocationByIP(): Promise<{ lat: number; lon: number; 
         console.log('IP-based location detected:', result);
         return result;
       } else {
-        console.warn('IP-based location data incomplete:', data);
+        console.warn('IP-based location data incomplete');
         return null;
       }
     } else {
-      console.warn('IP-based location API returned error:', response.status);
+      console.warn('IP-based location API error:', response.status);
       return null;
     }
   } catch (error) {
@@ -277,15 +277,11 @@ export async function initializeConfig(): Promise<void> {
 
     // Check if already initialized (config.json exists)
     if ((config as any)._initialized !== false) {
-      console.log('Configuration already initialized');
       return;
     }
 
-    console.log('First visit detected, initializing configuration...');
-
     // Detect browser settings
     const browserSettings = detectBrowserSettings();
-    console.log('Browser settings detected:', browserSettings);
 
     // Try to detect geolocation (GPS/WiFi-based)
     const coordinates = await detectGeolocation();
@@ -296,7 +292,6 @@ export async function initializeConfig(): Promise<void> {
         lat: coordinates.lat,
         lon: coordinates.lon,
       };
-      console.log('Geolocation detected:', coordinates);
     } else {
       // Geolocation failed, try IP-based location detection
       const ipLocation = await detectLocationByIP();
@@ -308,13 +303,11 @@ export async function initializeConfig(): Promise<void> {
           lon: ipLocation.lon,
           city: ipLocation.city,
         };
-        console.log('IP-based location successful:', ipLocation);
       } else {
         // IP-based location also failed, try geocoding with city name from timezone
         try {
           const city = browserSettings.weatherLocation?.city;
           if (city) {
-            console.log('IP-based location failed, trying geocoding with city:', city);
             const response = await fetch(`/api/geocoding?q=${encodeURIComponent(city)}`);
             if (response.ok) {
               const data = await response.json();
@@ -326,7 +319,6 @@ export async function initializeConfig(): Promise<void> {
                   lon: firstResult.longitude,
                   city: firstResult.name,
                 };
-                console.log('Geocoding successful:', firstResult);
               } else {
                 console.warn('No geocoding results found for city:', city);
               }

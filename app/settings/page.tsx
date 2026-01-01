@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getConfig, saveConfig, detectBrowserSettings, detectGeolocation } from '@/lib/storage';
+import { getConfig, saveConfig, detectBrowserSettings, detectGeolocation, detectLocationByIP } from '@/lib/storage';
 import { KioskConfig, DATE_FORMAT_OPTIONS, defaultConfig } from '@/lib/config';
 import { API } from '@/lib/constants';
 import { GeocodingResult } from '@/app/api/geocoding/route';
@@ -145,28 +145,42 @@ export default function SettingsPage() {
   };
 
   const handleDetectLocation = async () => {
-    if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser');
-      return;
+    setDetectingLocation(true);
+
+    // Try geolocation first (GPS/WiFi-based)
+    let coords = null;
+    let cityName = null;
+
+    if (navigator.geolocation) {
+      coords = await detectGeolocation();
     }
 
-    setDetectingLocation(true);
-    const coords = await detectGeolocation();
+    // If geolocation failed, try IP-based location
+    if (!coords) {
+      const ipLocation = await detectLocationByIP();
+      if (ipLocation) {
+        coords = { lat: ipLocation.lat, lon: ipLocation.lon };
+        cityName = ipLocation.city;
+      }
+    }
 
     if (coords) {
       setDetectedCoordinates(coords);
 
-      // Call reverse geocoding to get city name and timezone
+      // Call reverse geocoding to get city name and timezone (if not already from IP)
       try {
         const response = await fetch(`/api/reverse-geocoding?lat=${coords.lat}&lon=${coords.lon}`);
         if (response.ok) {
           const data = await response.json();
+          if (!cityName) {
+            cityName = data.displayName;
+          }
 
           // Also try to get timezone from forward geocoding using the city name
           let timezone = config?.timezone;
-          if (data.city) {
+          if (cityName) {
             try {
-              const geoResponse = await fetch(`/api/geocoding?q=${encodeURIComponent(data.city)}`);
+              const geoResponse = await fetch(`/api/geocoding?q=${encodeURIComponent(cityName)}`);
               if (geoResponse.ok) {
                 const geoData = await geoResponse.json();
                 if (geoData.results && geoData.results.length > 0) {
@@ -192,13 +206,13 @@ export default function SettingsPage() {
               weatherLocation: {
                 lat: coords.lat,
                 lon: coords.lon,
-                city: data.displayName,
+                city: cityName || data.displayName,
               },
               timezone: timezone || config.timezone,
             });
           }
         } else {
-          // Fallback: just set coordinates without city name
+          // Fallback: just set coordinates with city name from IP (if available)
           if (config) {
             setConfig({
               ...config,
@@ -206,13 +220,14 @@ export default function SettingsPage() {
                 ...config.weatherLocation,
                 lat: coords.lat,
                 lon: coords.lon,
+                city: cityName || config.weatherLocation.city,
               },
             });
           }
         }
       } catch (error) {
         console.error('Reverse geocoding error:', error);
-        // Fallback: just set coordinates
+        // Fallback: just set coordinates with city name from IP (if available)
         if (config) {
           setConfig({
             ...config,
@@ -220,12 +235,13 @@ export default function SettingsPage() {
               ...config.weatherLocation,
               lat: coords.lat,
               lon: coords.lon,
+              city: cityName || config.weatherLocation.city,
             },
           });
         }
       }
     } else {
-      alert('Failed to detect location. Please enable location permissions.');
+      alert('Failed to detect location. Please check your network connection and try again.');
     }
 
     setDetectingLocation(false);
