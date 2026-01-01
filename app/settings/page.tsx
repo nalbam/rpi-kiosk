@@ -141,24 +141,83 @@ export default function SettingsPage() {
 
     setDetectingLocation(true);
     const coords = await detectGeolocation();
-    setDetectingLocation(false);
 
     if (coords) {
       setDetectedCoordinates(coords);
-      // Automatically apply detected coordinates
-      if (config) {
-        setConfig({
-          ...config,
-          weatherLocation: {
-            ...config.weatherLocation,
-            lat: coords.lat,
-            lon: coords.lon,
-          },
-        });
+
+      // Call reverse geocoding to get city name and timezone
+      try {
+        const response = await fetch(`/api/reverse-geocoding?lat=${coords.lat}&lon=${coords.lon}`);
+        if (response.ok) {
+          const data = await response.json();
+
+          // Also try to get timezone from forward geocoding using the city name
+          let timezone = config?.timezone;
+          if (data.city) {
+            try {
+              const geoResponse = await fetch(`/api/geocoding?q=${encodeURIComponent(data.city)}`);
+              if (geoResponse.ok) {
+                const geoData = await geoResponse.json();
+                if (geoData.results && geoData.results.length > 0) {
+                  const firstResult = geoData.results[0];
+                  if (firstResult.timezone) {
+                    timezone = firstResult.timezone;
+                    // Add timezone to list if not present
+                    if (!timezones.includes(firstResult.timezone)) {
+                      setTimezones((prev) => [...prev, firstResult.timezone].sort());
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Failed to get timezone:', error);
+            }
+          }
+
+          // Update config with all detected information
+          if (config) {
+            setConfig({
+              ...config,
+              weatherLocation: {
+                lat: coords.lat,
+                lon: coords.lon,
+                city: data.displayName,
+              },
+              timezone: timezone || config.timezone,
+            });
+          }
+        } else {
+          // Fallback: just set coordinates without city name
+          if (config) {
+            setConfig({
+              ...config,
+              weatherLocation: {
+                ...config.weatherLocation,
+                lat: coords.lat,
+                lon: coords.lon,
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        // Fallback: just set coordinates
+        if (config) {
+          setConfig({
+            ...config,
+            weatherLocation: {
+              ...config.weatherLocation,
+              lat: coords.lat,
+              lon: coords.lon,
+            },
+          });
+        }
       }
     } else {
       alert('Failed to detect location. Please enable location permissions.');
     }
+
+    setDetectingLocation(false);
   };
 
   const handleApplyDetectedTimezone = () => {
