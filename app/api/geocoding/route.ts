@@ -1,0 +1,70 @@
+import { NextResponse } from 'next/server';
+import { fetchWithTimeout } from '@/lib/urlValidation';
+import { API } from '@/lib/constants';
+
+export interface GeocodingResult {
+  name: string;
+  latitude: number;
+  longitude: number;
+  country: string;
+  admin1?: string;
+  admin2?: string;
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get('q');
+
+  if (!query || query.trim().length === 0) {
+    return NextResponse.json(
+      { error: 'Missing query parameter' },
+      { status: 400 }
+    );
+  }
+
+  // Validate query length
+  if (query.length > 100) {
+    return NextResponse.json(
+      { error: 'Query too long (max 100 characters)' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Using Open-Meteo Geocoding API (free, no API key required)
+    const response = await fetchWithTimeout(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json`,
+      API.TIMEOUT_MS,
+      API.MAX_WEATHER_SIZE
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch geocoding data');
+    }
+
+    const data = await response.json();
+
+    // Return empty array if no results
+    if (!data.results || data.results.length === 0) {
+      return NextResponse.json({ results: [] });
+    }
+
+    // Map results to a simpler format
+    const results: GeocodingResult[] = data.results.map((result: any) => ({
+      name: result.name,
+      latitude: result.latitude,
+      longitude: result.longitude,
+      country: result.country,
+      admin1: result.admin1,
+      admin2: result.admin2,
+    }));
+
+    return NextResponse.json({ results });
+  } catch (error) {
+    console.error('Geocoding API error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch geocoding data' },
+      { status: 500 }
+    );
+  }
+}

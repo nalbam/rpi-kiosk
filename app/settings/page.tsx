@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getConfig, saveConfig, detectBrowserSettings, detectGeolocation } from '@/lib/storage';
 import { KioskConfig, DATE_FORMAT_OPTIONS, defaultConfig } from '@/lib/config';
 import { API } from '@/lib/constants';
+import { GeocodingResult } from '@/app/api/geocoding/route';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -15,6 +16,9 @@ export default function SettingsPage() {
   const [detectedCity, setDetectedCity] = useState<string>('');
   const [detectedCoordinates, setDetectedCoordinates] = useState<{ lat: number; lon: number } | null>(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
+  const [citySearchQuery, setCitySearchQuery] = useState('');
+  const [citySearchResults, setCitySearchResults] = useState<GeocodingResult[]>([]);
+  const [searchingCity, setSearchingCity] = useState(false);
 
   // Load configuration from server
   useEffect(() => {
@@ -192,6 +196,56 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSearchCity = async () => {
+    if (!citySearchQuery.trim()) {
+      return;
+    }
+
+    setSearchingCity(true);
+    setCitySearchResults([]);
+
+    try {
+      const response = await fetch(`/api/geocoding?q=${encodeURIComponent(citySearchQuery)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCitySearchResults(data.results || []);
+      } else {
+        alert('Failed to search for city');
+      }
+    } catch (error) {
+      console.error('City search error:', error);
+      alert('Failed to search for city');
+    } finally {
+      setSearchingCity(false);
+    }
+  };
+
+  const handleSelectCity = (result: GeocodingResult) => {
+    if (!config) return;
+
+    // Build a display name from the result
+    let cityName = result.name;
+    if (result.admin1 && result.admin1 !== result.name) {
+      cityName += `, ${result.admin1}`;
+    }
+    if (result.country) {
+      cityName += `, ${result.country}`;
+    }
+
+    setConfig({
+      ...config,
+      weatherLocation: {
+        lat: result.latitude,
+        lon: result.longitude,
+        city: cityName,
+      },
+    });
+
+    // Clear search
+    setCitySearchQuery('');
+    setCitySearchResults([]);
+  };
+
   if (!config) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
@@ -213,9 +267,9 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           {/* Time Settings */}
-          <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+          <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">
             <h2 className="text-2xl font-semibold mb-4">Time Settings</h2>
 
             <div className="space-y-4">
@@ -283,13 +337,56 @@ export default function SettingsPage() {
           </div>
 
           {/* Weather Settings */}
-          <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+          <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">
             <h2 className="text-2xl font-semibold mb-4">Weather Settings</h2>
 
             <div className="space-y-4">
               <div>
+                <label className="block text-sm font-medium mb-2">Search City</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={citySearchQuery}
+                    onChange={(e) => setCitySearchQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearchCity()}
+                    className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                    placeholder="Search for a city (e.g., Seoul, New York, London)"
+                  />
+                  <button
+                    onClick={handleSearchCity}
+                    disabled={searchingCity || !citySearchQuery.trim()}
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-colors"
+                  >
+                    {searchingCity ? 'Searching...' : 'Search'}
+                  </button>
+                </div>
+                {citySearchResults.length > 0 && (
+                  <div className="mt-2 bg-gray-800 border border-gray-700 rounded-lg max-h-60 overflow-y-auto">
+                    {citySearchResults.map((result, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleSelectCity(result)}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0"
+                      >
+                        <div className="font-medium">{result.name}</div>
+                        <div className="text-sm text-gray-400">
+                          {[result.admin1, result.admin2, result.country].filter(Boolean).join(', ')}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {result.latitude.toFixed(4)}, {result.longitude.toFixed(4)}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Search for a city to automatically set coordinates
+                </p>
+              </div>
+
+              <div>
                 <div className="flex flex-col gap-2 mb-2">
-                  <label className="block text-sm font-medium">City</label>
+                  <label className="block text-sm font-medium">City Name</label>
                   <div className="flex flex-wrap gap-2">
                     {detectedCity && (
                       <button
@@ -319,6 +416,9 @@ export default function SettingsPage() {
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                   placeholder="New York"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Display name for the city (automatically set when searching)
+                </p>
               </div>
 
               <div>
@@ -411,7 +511,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Calendar Settings */}
-          <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+          <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">
             <h2 className="text-2xl font-semibold mb-4">Calendar Settings</h2>
 
             <div className="space-y-4">
@@ -472,7 +572,7 @@ export default function SettingsPage() {
           </div>
 
           {/* RSS Settings */}
-          <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+          <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">
             <h2 className="text-2xl font-semibold mb-4">RSS Feed Settings</h2>
 
             <div className="space-y-4">
@@ -561,16 +661,16 @@ export default function SettingsPage() {
 
         {/* Action Buttons */}
         <div className="mt-8">
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={handleSave}
-              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition-colors"
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-base sm:text-lg font-semibold transition-colors"
             >
               Save to Server
             </button>
             <button
               onClick={handleReset}
-              className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-lg font-semibold transition-colors"
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-base sm:text-lg font-semibold transition-colors whitespace-nowrap"
             >
               Reset to Defaults
             </button>
