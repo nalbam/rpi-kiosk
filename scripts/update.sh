@@ -9,12 +9,14 @@
 #   1. Pulls latest code from git
 #   2. Updates npm dependencies
 #   3. Rebuilds the application
-#   4. Restarts the service
 #
 # What it does NOT do:
-#   - Stop the service (continues running during update)
+#   - Stop or restart the service (you need to restart manually)
 #   - Update system packages (chromium, Node.js, etc.)
 #   - Modify systemd service file
+#
+# Note: After running this script, restart the service to apply changes:
+#   sudo systemctl restart rpi-kiosk
 #
 # Usage:
 #   ./scripts/update.sh
@@ -44,7 +46,7 @@ echo "  Directory: $INSTALL_DIR"
 echo ""
 
 # Step 1: Pull latest code
-echo "[1/4] Pulling latest code from git..."
+echo "[1/3] Pulling latest code from git..."
 cd "$INSTALL_DIR"
 
 if git pull; then
@@ -55,28 +57,12 @@ else
 fi
 
 # Step 2: Update npm dependencies
-echo "[2/4] Updating npm dependencies..."
+echo "[2/3] Updating npm dependencies..."
 npm install --legacy-peer-deps
 
 # Step 3: Rebuild application
-echo "[3/4] Rebuilding application..."
+echo "[3/3] Rebuilding application..."
 npm run build
-
-# Step 4: Restart service
-echo "[4/4] Restarting service..."
-sudo systemctl restart rpi-kiosk.service
-echo "  - Restarted rpi-kiosk.service"
-
-# Wait a moment for service to start
-sleep 2
-
-# Check service status
-if systemctl is-active --quiet rpi-kiosk.service; then
-    echo "  - Service is running"
-else
-    echo "  - Warning: Service may have failed to start"
-    echo "  - Check logs with: sudo journalctl -u rpi-kiosk -f"
-fi
 
 # -----------------------------------------------------------------------------
 # Update Complete
@@ -87,11 +73,11 @@ echo "========================================="
 echo "Update Complete!"
 echo "========================================="
 echo ""
-echo "Service status:"
-sudo systemctl status rpi-kiosk.service --no-pager -l
+echo "IMPORTANT: Restart the service to apply changes:"
+echo "  sudo systemctl restart rpi-kiosk"
 echo ""
 echo "Useful commands:"
-echo "  - View logs:     sudo journalctl -u rpi-kiosk -f"
-echo "  - Check status:  sudo systemctl status rpi-kiosk"
 echo "  - Restart:       sudo systemctl restart rpi-kiosk"
+echo "  - Check status:  sudo systemctl status rpi-kiosk"
+echo "  - View logs:     sudo journalctl -u rpi-kiosk -f"
 echo ""
