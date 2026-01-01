@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { getConfig } from '@/lib/storage';
+import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
+import { useAutoRefresh } from '@/lib/hooks/useAutoRefresh';
+import { WidgetContainer } from '@/components/shared/WidgetContainer';
 import { PROCESSING_LIMITS } from '@/lib/constants';
 
 interface RSSItem {
@@ -19,30 +21,23 @@ export default function RSS() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayLimit, setDisplayLimit] = useState(7);
 
-  const fetchRSS = async (retryCount = 0, maxRetries = 10, retryDelay = 500) => {
-    try {
-      const config = await getConfig();
-
-      // Check if config is not yet initialized (first visit)
-      if ((config as any)._initialized === false && retryCount < maxRetries) {
-        setTimeout(() => {
-          fetchRSS(retryCount + 1, maxRetries, retryDelay);
-        }, retryDelay);
-        return;
-      }
-
-      // Warn if max retries reached with uninitialized config
-      if ((config as any)._initialized === false) {
-        console.warn('RSS: Config initialization timeout');
-      }
-
+  const { config } = useConfigWithRetry({
+    componentName: 'RSS',
+    onConfigReady: (config) => {
       setDisplayLimit(config.displayLimits.rssItems);
+    },
+  });
 
-      if (config.rssFeeds.length === 0) {
-        setLoading(false);
-        return;
-      }
+  const fetchRSS = async () => {
+    if (!config) return;
 
+    // If no RSS feeds configured, just finish loading
+    if (config.rssFeeds.length === 0) {
+      setLoading(false);
+      return;
+    }
+
+    try {
       const response = await fetch(
         `/api/rss?urls=${encodeURIComponent(config.rssFeeds.join(','))}`
       );
@@ -62,26 +57,13 @@ export default function RSS() {
     }
   };
 
-  useEffect(() => {
-    fetchRSS();
+  useAutoRefresh({
+    refreshKey: 'rss',
+    onRefresh: fetchRSS,
+    enabled: !!config,
+  });
 
-    async function setupInterval() {
-      const config = await getConfig();
-      const interval = setInterval(fetchRSS, config.refreshIntervals.rss * 60 * 1000);
-      return interval;
-    }
-
-    let intervalId: NodeJS.Timeout;
-    setupInterval().then((id) => {
-      intervalId = id;
-    });
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, []);
-
-  // Auto-scroll through news items
+  // Auto-scroll through news items (carousel)
   useEffect(() => {
     if (items.length === 0) return;
 
@@ -92,40 +74,20 @@ export default function RSS() {
     return () => clearInterval(interval);
   }, [items.length]);
 
-  if (loading) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">News</h2>
-        <div className="text-gray-400 text-vw-sm">Loading news...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">News</h2>
-        <div className="text-gray-400 text-vw-sm">Unable to fetch news</div>
-      </div>
-    );
-  }
-
-  if (items.length === 0) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">News</h2>
-        <div className="text-gray-400 text-vw-sm">No news items</div>
-      </div>
-    );
-  }
-
   const displayItems = items.length > 0
     ? Array.from({ length: Math.min(displayLimit, items.length) }).map((_, i) => items[(currentIndex + i) % items.length])
     : [];
 
   return (
-    <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-      <h2 className="text-vw-xl font-semibold mb-vw-sm">News</h2>
+    <WidgetContainer
+      title="News"
+      loading={loading}
+      loadingMessage="Loading news..."
+      error={error}
+      errorMessage="Unable to fetch news"
+      empty={items.length === 0}
+      emptyMessage="No news items"
+    >
       <div className="space-y-vw-sm overflow-y-auto flex-1 min-h-0">
         {displayItems.map((item) => (
           <div key={item.link} className="border-b border-gray-700 pb-vw-xs last:border-b-0">
@@ -158,6 +120,6 @@ export default function RSS() {
           />
         ))}
       </div>
-    </div>
+    </WidgetContainer>
   );
 }

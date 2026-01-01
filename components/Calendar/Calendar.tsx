@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { format, isSameDay, isToday, isTomorrow } from 'date-fns';
-import { getConfig } from '@/lib/storage';
+import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
+import { useAutoRefresh } from '@/lib/hooks/useAutoRefresh';
+import { WidgetContainer } from '@/components/shared/WidgetContainer';
 import { MapPin } from 'lucide-react';
 
 interface CalendarEvent {
@@ -19,46 +21,39 @@ export default function Calendar() {
   const [error, setError] = useState(false);
   const [displayLimit, setDisplayLimit] = useState(5);
 
-  const fetchCalendar = async (retryCount = 0, maxRetries = 10, retryDelay = 500) => {
-    try {
-      const config = await getConfig();
-
-      // Check if config is not yet initialized (first visit)
-      if ((config as any)._initialized === false && retryCount < maxRetries) {
-        setTimeout(() => {
-          fetchCalendar(retryCount + 1, maxRetries, retryDelay);
-        }, retryDelay);
-        return;
-      }
-
-      // Warn if max retries reached with uninitialized config
-      if ((config as any)._initialized === false) {
-        console.warn('Calendar: Config initialization timeout');
-      }
-
+  const { config } = useConfigWithRetry({
+    componentName: 'Calendar',
+    onConfigReady: (config) => {
       setDisplayLimit(config.displayLimits.calendarEvents);
+    },
+  });
 
-      if (!config.calendarUrl) {
-        setLoading(false);
-        return;
-      }
+  const fetchCalendar = async () => {
+    if (!config) return;
 
-      // Basic client-side URL validation
-      try {
-        const url = new URL(config.calendarUrl);
-        if (!['http:', 'https:'].includes(url.protocol)) {
-          console.error('Invalid URL protocol:', url.protocol);
-          setError(true);
-          setLoading(false);
-          return;
-        }
-      } catch {
-        console.error('Invalid URL format:', config.calendarUrl);
+    // If no calendar URL configured, just finish loading
+    if (!config.calendarUrl) {
+      setLoading(false);
+      return;
+    }
+
+    // Basic client-side URL validation
+    try {
+      const url = new URL(config.calendarUrl);
+      if (!['http:', 'https:'].includes(url.protocol)) {
+        console.error('Invalid URL protocol:', url.protocol);
         setError(true);
         setLoading(false);
         return;
       }
+    } catch {
+      console.error('Invalid URL format:', config.calendarUrl);
+      setError(true);
+      setLoading(false);
+      return;
+    }
 
+    try {
       const response = await fetch(
         `/api/calendar?url=${encodeURIComponent(config.calendarUrl)}`
       );
@@ -78,24 +73,11 @@ export default function Calendar() {
     }
   };
 
-  useEffect(() => {
-    fetchCalendar();
-
-    async function setupInterval() {
-      const config = await getConfig();
-      const interval = setInterval(fetchCalendar, config.refreshIntervals.calendar * 60 * 1000);
-      return interval;
-    }
-
-    let intervalId: NodeJS.Timeout;
-    setupInterval().then((id) => {
-      intervalId = id;
-    });
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, []);
+  useAutoRefresh({
+    refreshKey: 'calendar',
+    onRefresh: fetchCalendar,
+    enabled: !!config,
+  });
 
   const getDateLabel = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -104,38 +86,18 @@ export default function Calendar() {
     return format(date, 'MMM dd');
   };
 
-  if (loading) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">Calendar</h2>
-        <div className="text-gray-400 text-vw-sm">Loading events...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">Calendar</h2>
-        <div className="text-gray-400 text-vw-sm">Unable to fetch events</div>
-      </div>
-    );
-  }
-
-  if (events.length === 0) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">Calendar</h2>
-        <div className="text-gray-400 text-vw-sm">No upcoming events</div>
-      </div>
-    );
-  }
-
   const displayEvents = events.slice(0, displayLimit);
 
   return (
-    <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-      <h2 className="text-vw-xl font-semibold mb-vw-sm">Calendar</h2>
+    <WidgetContainer
+      title="Calendar"
+      loading={loading}
+      loadingMessage="Loading events..."
+      error={error}
+      errorMessage="Unable to fetch events"
+      empty={events.length === 0}
+      emptyMessage="No upcoming events"
+    >
       <div className="space-y-vw-xs overflow-y-auto flex-1 min-h-0">
         {displayEvents.map((event, index) => {
           const startDate = new Date(event.start);
@@ -190,6 +152,6 @@ export default function Calendar() {
           );
         })}
       </div>
-    </div>
+    </WidgetContainer>
   );
 }

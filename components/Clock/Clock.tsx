@@ -3,56 +3,20 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { getConfig } from '@/lib/storage';
+import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
 
 export default function Clock() {
   const [time, setTime] = useState<Date | null>(null);
-  const [timezone, setTimezone] = useState(() => {
-    // Use browser's timezone as initial value
-    try {
-      return Intl.DateTimeFormat().resolvedOptions().timeZone;
-    } catch {
-      return 'UTC';
-    }
-  });
+  const [timezone, setTimezone] = useState('UTC');
   const [dateFormat, setDateFormat] = useState('EEEE, MMMM dd, yyyy');
 
-  useEffect(() => {
-    let isMounted = true;
-    let retryCount = 0;
-    const maxRetries = 10; // Max 10 retries (5 seconds total)
-    const retryDelay = 500; // 500ms between retries
-
-    async function loadConfig() {
-      const config = await getConfig();
-
-      // Check if config is not yet initialized (first visit)
-      if ((config as any)._initialized === false && retryCount < maxRetries) {
-        retryCount++;
-        setTimeout(() => {
-          if (isMounted) {
-            loadConfig();
-          }
-        }, retryDelay);
-        return;
-      }
-
-      // Config is ready or max retries reached
-      if (isMounted) {
-        setTimezone(config.timezone);
-        setDateFormat(config.dateFormat || 'EEEE, MMMM dd, yyyy');
-        if ((config as any)._initialized === false) {
-          console.warn('Clock: Config initialization timeout');
-        }
-      }
-    }
-
-    loadConfig();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { config } = useConfigWithRetry({
+    componentName: 'Clock',
+    onConfigReady: (config) => {
+      setTimezone(config.timezone);
+      setDateFormat(config.dateFormat || 'EEEE, MMMM dd, yyyy');
+    },
+  });
 
   useEffect(() => {
     const updateTime = () => {

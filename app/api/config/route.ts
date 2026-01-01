@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { defaultConfig } from '@/lib/config';
+import { mergeConfigWithDefaults } from '@/lib/configHelpers';
 import type { KioskConfig } from '@/lib/config';
 
 /**
@@ -18,22 +19,7 @@ export async function GET() {
       const fileConfig = JSON.parse(fileContent) as Partial<KioskConfig>;
 
       // Merge with default config to ensure all required fields exist
-      const config: KioskConfig = {
-        ...defaultConfig,
-        ...fileConfig,
-        weatherLocation: {
-          ...defaultConfig.weatherLocation,
-          ...fileConfig.weatherLocation,
-        },
-        refreshIntervals: {
-          ...defaultConfig.refreshIntervals,
-          ...fileConfig.refreshIntervals,
-        },
-        displayLimits: {
-          ...defaultConfig.displayLimits,
-          ...fileConfig.displayLimits,
-        },
-      };
+      const config = mergeConfigWithDefaults(fileConfig);
 
       return NextResponse.json(config);
     }
@@ -64,22 +50,7 @@ export async function POST(request: Request) {
     }
 
     // Merge with default config to ensure all required fields
-    const fullConfig: KioskConfig = {
-      ...defaultConfig,
-      ...config,
-      weatherLocation: {
-        ...defaultConfig.weatherLocation,
-        ...config.weatherLocation,
-      },
-      refreshIntervals: {
-        ...defaultConfig.refreshIntervals,
-        ...config.refreshIntervals,
-      },
-      displayLimits: {
-        ...defaultConfig.displayLimits,
-        ...config.displayLimits,
-      },
-    };
+    const fullConfig = mergeConfigWithDefaults(config);
 
     const configPath = join(process.cwd(), 'config.json');
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchWithTimeout } from '@/lib/urlValidation';
-import { API, COORDINATES } from '@/lib/constants';
+import { validateCoordinates } from '@/lib/validation';
+import { API } from '@/lib/constants';
 
 export interface ReverseGeocodingResult {
   city?: string;
@@ -14,37 +15,16 @@ export async function GET(request: Request) {
   const lat = searchParams.get('lat');
   const lon = searchParams.get('lon');
 
-  if (!lat || !lon) {
+  // Validate coordinates
+  const validation = validateCoordinates(lat, lon);
+  if (!validation.valid) {
     return NextResponse.json(
-      { error: 'Missing lat or lon parameter' },
+      { error: validation.error },
       { status: 400 }
     );
   }
 
-  // Validate coordinates are valid numbers within acceptable ranges
-  const latNum = parseFloat(lat);
-  const lonNum = parseFloat(lon);
-
-  if (isNaN(latNum) || isNaN(lonNum)) {
-    return NextResponse.json(
-      { error: 'Invalid latitude or longitude values' },
-      { status: 400 }
-    );
-  }
-
-  if (latNum < COORDINATES.MIN_LATITUDE || latNum > COORDINATES.MAX_LATITUDE) {
-    return NextResponse.json(
-      { error: `Latitude must be between ${COORDINATES.MIN_LATITUDE} and ${COORDINATES.MAX_LATITUDE}` },
-      { status: 400 }
-    );
-  }
-
-  if (lonNum < COORDINATES.MIN_LONGITUDE || lonNum > COORDINATES.MAX_LONGITUDE) {
-    return NextResponse.json(
-      { error: `Longitude must be between ${COORDINATES.MIN_LONGITUDE} and ${COORDINATES.MAX_LONGITUDE}` },
-      { status: 400 }
-    );
-  }
+  const { lat: latNum, lon: lonNum } = validation;
 
   try {
     // Using Nominatim (OpenStreetMap) reverse geocoding API

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getConfig } from '@/lib/storage';
+import { useState } from 'react';
+import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
+import { useAutoRefresh } from '@/lib/hooks/useAutoRefresh';
+import { WidgetContainer } from '@/components/shared/WidgetContainer';
 import { Sun, CloudSun, Cloud, CloudFog, CloudDrizzle, CloudRain, CloudSnow, CloudLightning, Thermometer } from 'lucide-react';
 
 interface WeatherData {
@@ -18,25 +20,17 @@ export default function Weather() {
   const [error, setError] = useState(false);
   const [city, setCity] = useState('');
 
-  const fetchWeather = async (retryCount = 0, maxRetries = 10, retryDelay = 500) => {
-    try {
-      const config = await getConfig();
-
-      // Check if config is not yet initialized (first visit)
-      if ((config as any)._initialized === false && retryCount < maxRetries) {
-        setTimeout(() => {
-          fetchWeather(retryCount + 1, maxRetries, retryDelay);
-        }, retryDelay);
-        return;
-      }
-
-      // Warn if max retries reached with uninitialized config
-      if ((config as any)._initialized === false) {
-        console.warn('Weather: Config initialization timeout');
-      }
-
+  const { config } = useConfigWithRetry({
+    componentName: 'Weather',
+    onConfigReady: (config) => {
       setCity(config.weatherLocation.city);
+    },
+  });
 
+  const fetchWeather = async () => {
+    if (!config) return;
+
+    try {
       const response = await fetch(
         `/api/weather?lat=${config.weatherLocation.lat}&lon=${config.weatherLocation.lon}`
       );
@@ -56,51 +50,11 @@ export default function Weather() {
     }
   };
 
-  useEffect(() => {
-    fetchWeather();
-
-    async function setupInterval() {
-      const config = await getConfig();
-      const interval = setInterval(fetchWeather, config.refreshIntervals.weather * 60 * 1000);
-      return interval;
-    }
-
-    let intervalId: NodeJS.Timeout;
-    setupInterval().then((id) => {
-      intervalId = id;
-    });
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">Weather</h2>
-        <div className="text-gray-400 text-vw-sm">Loading weather...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">Weather</h2>
-        <div className="text-gray-400 text-vw-sm">Unable to fetch weather</div>
-      </div>
-    );
-  }
-
-  if (!weather) {
-    return (
-      <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-        <h2 className="text-vw-xl font-semibold mb-vw-sm">Weather</h2>
-        <div className="text-gray-400 text-vw-sm">Unable to fetch weather</div>
-      </div>
-    );
-  }
+  useAutoRefresh({
+    refreshKey: 'weather',
+    onRefresh: fetchWeather,
+    enabled: !!config,
+  });
 
   const getWeatherIcon = (code: number) => {
     const iconProps = { strokeWidth: 1.5, className: "weather-icon" };
@@ -119,24 +73,32 @@ export default function Weather() {
   };
 
   return (
-    <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
-      <h2 className="text-vw-xl font-semibold mb-vw-sm">Weather</h2>
-      <div className="text-center flex-1 flex flex-col justify-center gap-vw-sm">
-        <div className="flex justify-center">{getWeatherIcon(weather.weatherCode)}</div>
-        <div className="text-vw-5xl font-bold">{weather.temperature}°C</div>
-        <div className="text-vw-xl text-gray-300">{weather.description}</div>
-        <div className="text-vw-lg text-gray-400">{city}</div>
-        <div className="mt-vw-xs grid grid-cols-2 gap-vw-sm text-vw-sm text-gray-400">
-          <div>
-            <div>Humidity</div>
-            <div className="text-white text-vw-base">{weather.humidity}%</div>
-          </div>
-          <div>
-            <div>Wind</div>
-            <div className="text-white text-vw-base">{weather.windSpeed} km/h</div>
+    <WidgetContainer
+      title="Weather"
+      loading={loading}
+      loadingMessage="Loading weather..."
+      error={error}
+      errorMessage="Unable to fetch weather"
+      empty={!weather}
+    >
+      {weather && (
+        <div className="text-center flex-1 flex flex-col justify-center gap-vw-sm">
+          <div className="flex justify-center">{getWeatherIcon(weather.weatherCode)}</div>
+          <div className="text-vw-5xl font-bold">{weather.temperature}°C</div>
+          <div className="text-vw-xl text-gray-300">{weather.description}</div>
+          <div className="text-vw-lg text-gray-400">{city}</div>
+          <div className="mt-vw-xs grid grid-cols-2 gap-vw-sm text-vw-sm text-gray-400">
+            <div>
+              <div>Humidity</div>
+              <div className="text-white text-vw-base">{weather.humidity}%</div>
+            </div>
+            <div>
+              <div>Wind</div>
+              <div className="text-white text-vw-base">{weather.windSpeed} km/h</div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </WidgetContainer>
   );
 }
