@@ -28,9 +28,10 @@ cd rpi-kiosk
 ```
 
 The installation script automatically handles:
-- System package installation (chromium, unclutter, etc.)
+- System package installation (chromium, unclutter, xdotool, curl, pcmanfm)
 - Node.js 22 installation
 - npm dependency installation and build
+- Desktop wallpaper setup (background.png)
 - systemd service registration and startup
 
 ## Update

@@ -50,10 +50,10 @@ echo "[2/6] Installing system dependencies..."
 # Detect Chromium package name (chromium vs chromium-browser)
 if apt-cache show chromium &> /dev/null; then
     echo "  - Installing chromium (newer package name)"
-    sudo apt-get install -y chromium unclutter xdotool curl
+    sudo apt-get install -y chromium unclutter xdotool curl pcmanfm
 elif apt-cache show chromium-browser &> /dev/null; then
     echo "  - Installing chromium-browser (legacy package name)"
-    sudo apt-get install -y chromium-browser unclutter xdotool curl
+    sudo apt-get install -y chromium-browser unclutter xdotool curl pcmanfm
 else
     echo "  - Error: Neither chromium nor chromium-browser package found"
     exit 1
