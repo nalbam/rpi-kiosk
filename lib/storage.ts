@@ -142,16 +142,38 @@ export async function initConfigFromFile(): Promise<void> {
     if (response.ok) {
       const fileConfig = await response.json();
 
-      // Merge browser-detected settings with file config
-      // File config takes precedence if timezone/city/coordinates are explicitly set
+      // Smart merge: Only use fileConfig values if they differ from defaults
+      // This allows browser-detected settings to take precedence over default values in config.json
+
+      // Use fileConfig timezone only if it's different from default
+      const timezone = fileConfig.timezone !== defaultConfig.timezone
+        ? fileConfig.timezone
+        : (browserSettings.timezone || defaultConfig.timezone);
+
+      // Use fileConfig city only if it's different from default
+      const city = fileConfig.weatherLocation?.city !== defaultConfig.weatherLocation.city
+        ? fileConfig.weatherLocation.city
+        : (browserSettings.weatherLocation?.city || defaultConfig.weatherLocation.city);
+
+      // Use fileConfig coordinates only if they differ from defaults
+      const lat = fileConfig.weatherLocation?.lat !== defaultConfig.weatherLocation.lat
+        ? fileConfig.weatherLocation.lat
+        : (browserSettings.weatherLocation?.lat || defaultConfig.weatherLocation.lat);
+
+      const lon = fileConfig.weatherLocation?.lon !== defaultConfig.weatherLocation.lon
+        ? fileConfig.weatherLocation.lon
+        : (browserSettings.weatherLocation?.lon || defaultConfig.weatherLocation.lon);
+
       const mergedConfig = {
         ...defaultConfig,
-        ...browserSettings,
         ...fileConfig,
+        timezone,
         weatherLocation: {
           ...defaultConfig.weatherLocation,
-          ...browserSettings.weatherLocation,
           ...fileConfig.weatherLocation,
+          city,
+          lat,
+          lon,
         },
       };
 

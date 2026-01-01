@@ -1,4 +1,6 @@
 {
+  "_comment": "Copy this file to config.json to customize settings",
+  "_note": "If timezone/city/coordinates match defaults (Asia/Seoul, Seoul, 37.5665/126.978), browser-detected values will be used instead",
   "timezone": "Asia/Seoul",
   "dateFormat": "EEEE, MMMM dd, yyyy",
   "weatherLocation": {
