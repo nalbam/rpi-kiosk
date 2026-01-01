@@ -10,6 +10,10 @@ export default function SettingsPage() {
   const [config, setConfig] = useState<KioskConfig | null>(null);
   const [rssInput, setRssInput] = useState('');
   const [timezones, setTimezones] = useState<string[]>([]);
+  const [detectedTimezone, setDetectedTimezone] = useState<string>('');
+  const [detectedCity, setDetectedCity] = useState<string>('');
+  const [detectedCoordinates, setDetectedCoordinates] = useState<{ lat: number; lon: number } | null>(null);
+  const [detectingLocation, setDetectingLocation] = useState(false);
 
   // Load configuration
   useEffect(() => {
@@ -38,6 +42,23 @@ export default function SettingsPage() {
         'Asia/Shanghai',
         'Australia/Sydney',
       ]);
+    }
+  }, []);
+
+  // Detect browser settings on mount
+  useEffect(() => {
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      setDetectedTimezone(timezone);
+
+      // Extract city from timezone
+      if (timezone.includes('/')) {
+        const parts = timezone.split('/');
+        const city = parts[parts.length - 1].replace(/_/g, ' ');
+        setDetectedCity(city);
+      }
+    } catch (error) {
+      console.error('Failed to detect browser settings:', error);
     }
   }, []);
 
@@ -99,6 +120,61 @@ export default function SettingsPage() {
     }
   };
 
+  const handleDetectLocation = async () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coords = {
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        };
+        setDetectedCoordinates(coords);
+        setDetectingLocation(false);
+
+        // Automatically apply detected coordinates
+        if (config) {
+          setConfig({
+            ...config,
+            weatherLocation: {
+              ...config.weatherLocation,
+              lat: coords.lat,
+              lon: coords.lon,
+            },
+          });
+        }
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        setDetectingLocation(false);
+        alert(`Failed to detect location: ${error.message}`);
+      },
+      {
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
+
+  const handleApplyDetectedTimezone = () => {
+    if (config && detectedTimezone) {
+      setConfig({ ...config, timezone: detectedTimezone });
+    }
+  };
+
+  const handleApplyDetectedCity = () => {
+    if (config && detectedCity) {
+      setConfig({
+        ...config,
+        weatherLocation: { ...config.weatherLocation, city: detectedCity },
+      });
+    }
+  };
+
   const handleAddRSS = () => {
     if (rssInput.trim() && config) {
       setConfig({
@@ -146,7 +222,17 @@ export default function SettingsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Timezone</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium">Timezone</label>
+                  {detectedTimezone && (
+                    <button
+                      onClick={handleApplyDetectedTimezone}
+                      className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                    >
+                      Use Browser Default ({detectedTimezone})
+                    </button>
+                  )}
+                </div>
                 <select
                   value={config.timezone}
                   onChange={(e) => setConfig({ ...config, timezone: e.target.value })}
@@ -204,7 +290,17 @@ export default function SettingsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">City</label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium">City</label>
+                  {detectedCity && (
+                    <button
+                      onClick={handleApplyDetectedCity}
+                      className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                    >
+                      Use Browser Default ({detectedCity})
+                    </button>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={config.weatherLocation.city}
@@ -217,49 +313,61 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Latitude</label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    min="-90"
-                    max="90"
-                    value={config.weatherLocation.lat}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      if (!isNaN(value) && value >= -90 && value <= 90) {
-                        setConfig({
-                          ...config,
-                          weatherLocation: { ...config.weatherLocation, lat: value }
-                        });
-                      }
-                    }}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">-90 to 90</p>
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium">Coordinates</label>
+                  <button
+                    onClick={handleDetectLocation}
+                    disabled={detectingLocation}
+                    className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded transition-colors"
+                  >
+                    {detectingLocation ? 'Detecting...' : detectedCoordinates ? `Detected: ${detectedCoordinates.lat.toFixed(4)}, ${detectedCoordinates.lon.toFixed(4)}` : 'Detect Location'}
+                  </button>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Latitude</label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      min="-90"
+                      max="90"
+                      value={config.weatherLocation.lat}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!isNaN(value) && value >= -90 && value <= 90) {
+                          setConfig({
+                            ...config,
+                            weatherLocation: { ...config.weatherLocation, lat: value }
+                          });
+                        }
+                      }}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">-90 to 90</p>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Longitude</label>
-                  <input
-                    type="number"
-                    step="0.0001"
-                    min="-180"
-                    max="180"
-                    value={config.weatherLocation.lon}
-                    onChange={(e) => {
-                      const value = parseFloat(e.target.value);
-                      if (!isNaN(value) && value >= -180 && value <= 180) {
-                        setConfig({
-                          ...config,
-                          weatherLocation: { ...config.weatherLocation, lon: value }
-                        });
-                      }
-                    }}
-                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                  <div>
+                    <label className="block text-xs text-gray-400 mb-1">Longitude</label>
+                    <input
+                      type="number"
+                      step="0.0001"
+                      min="-180"
+                      max="180"
+                      value={config.weatherLocation.lon}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!isNaN(value) && value >= -180 && value <= 180) {
+                          setConfig({
+                            ...config,
+                            weatherLocation: { ...config.weatherLocation, lon: value }
+                          });
+                        }
+                      }}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">-180 to 180</p>
+                  </div>
                 </div>
               </div>
 

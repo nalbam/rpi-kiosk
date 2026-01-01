@@ -4,8 +4,64 @@ const CONFIG_KEY = 'kiosk-config';
 const CONFIG_INITIALIZED_KEY = 'kiosk-config-initialized';
 
 /**
+ * Detect timezone and city from browser settings
+ */
+function detectBrowserSettings(): Partial<KioskConfig> {
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Extract city from timezone (e.g., "America/New_York" -> "New York")
+    let city = defaultConfig.weatherLocation.city;
+    if (timezone.includes('/')) {
+      const parts = timezone.split('/');
+      city = parts[parts.length - 1].replace(/_/g, ' ');
+    }
+
+    return {
+      timezone,
+      weatherLocation: {
+        ...defaultConfig.weatherLocation,
+        city,
+      },
+    };
+  } catch (error) {
+    console.error('Failed to detect browser settings:', error);
+    return {};
+  }
+}
+
+/**
+ * Detect geolocation coordinates from browser
+ * Returns a promise that resolves with coordinates or null
+ */
+async function detectGeolocation(): Promise<{ lat: number; lon: number } | null> {
+  if (typeof window === 'undefined' || !navigator.geolocation) {
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      },
+      (error) => {
+        console.warn('Geolocation detection failed:', error.message);
+        resolve(null);
+      },
+      {
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  });
+}
+
+/**
  * Get configuration
- * Priority: localStorage > config.json (via API) > defaultConfig
+ * Priority: localStorage > config.json (via API) > browser-detected settings > defaultConfig
  */
 export function getConfig(): KioskConfig {
   if (typeof window === 'undefined') {
@@ -39,12 +95,22 @@ export function getConfig(): KioskConfig {
     console.error('Failed to load config:', error);
   }
 
-  return defaultConfig;
+  // If no stored config, use browser-detected settings merged with defaults
+  const browserSettings = detectBrowserSettings();
+  return {
+    ...defaultConfig,
+    ...browserSettings,
+    weatherLocation: {
+      ...defaultConfig.weatherLocation,
+      ...browserSettings.weatherLocation,
+    },
+  };
 }
 
 /**
  * Initialize configuration from config.json (via API)
  * This should be called once on app startup
+ * Merges browser-detected settings (timezone, city, coordinates) with file config
  */
 export async function initConfigFromFile(): Promise<void> {
   if (typeof window === 'undefined') {
@@ -56,19 +122,72 @@ export async function initConfigFromFile(): Promise<void> {
     return;
   }
 
+  // Detect browser settings (timezone and city)
+  const browserSettings = detectBrowserSettings();
+
+  // Try to detect geolocation coordinates
+  const coordinates = await detectGeolocation();
+  if (coordinates) {
+    browserSettings.weatherLocation = {
+      ...defaultConfig.weatherLocation,
+      ...browserSettings.weatherLocation,
+      lat: coordinates.lat,
+      lon: coordinates.lon,
+    };
+    console.log('Geolocation detected:', coordinates);
+  }
+
   try {
     const response = await fetch('/api/config');
     if (response.ok) {
       const fileConfig = await response.json();
-      // Save file config as initial localStorage config
-      localStorage.setItem(CONFIG_KEY, JSON.stringify(fileConfig));
+
+      // Merge browser-detected settings with file config
+      // File config takes precedence if timezone/city/coordinates are explicitly set
+      const mergedConfig = {
+        ...defaultConfig,
+        ...browserSettings,
+        ...fileConfig,
+        weatherLocation: {
+          ...defaultConfig.weatherLocation,
+          ...browserSettings.weatherLocation,
+          ...fileConfig.weatherLocation,
+        },
+      };
+
+      // Save merged config as initial localStorage config
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(mergedConfig));
       localStorage.setItem(CONFIG_INITIALIZED_KEY, 'true');
-      console.log('Configuration initialized from config.json');
+      console.log('Configuration initialized from browser settings and config.json');
+    } else {
+      // If no config.json, use browser-detected settings
+      const initialConfig = {
+        ...defaultConfig,
+        ...browserSettings,
+        weatherLocation: {
+          ...defaultConfig.weatherLocation,
+          ...browserSettings.weatherLocation,
+        },
+      };
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(initialConfig));
+      localStorage.setItem(CONFIG_INITIALIZED_KEY, 'true');
+      console.log('Configuration initialized from browser settings');
     }
   } catch (error) {
     console.error('Failed to initialize config from file:', error);
-    // Mark as initialized anyway to prevent repeated attempts
+
+    // Use browser-detected settings as fallback
+    const initialConfig = {
+      ...defaultConfig,
+      ...browserSettings,
+      weatherLocation: {
+        ...defaultConfig.weatherLocation,
+        ...browserSettings.weatherLocation,
+      },
+    };
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(initialConfig));
     localStorage.setItem(CONFIG_INITIALIZED_KEY, 'true');
+    console.log('Configuration initialized from browser settings (fallback)');
   }
 }
 
