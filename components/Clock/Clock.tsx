@@ -7,7 +7,14 @@ import { getConfig } from '@/lib/storage';
 
 export default function Clock() {
   const [time, setTime] = useState<Date | null>(null);
-  const [timezone, setTimezone] = useState('Asia/Seoul');
+  const [timezone, setTimezone] = useState(() => {
+    // Use browser's timezone as initial value
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      return 'UTC';
+    }
+  });
   const [dateFormat, setDateFormat] = useState('EEEE, MMMM dd, yyyy');
 
   useEffect(() => {

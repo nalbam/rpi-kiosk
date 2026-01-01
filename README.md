@@ -4,11 +4,14 @@ Kiosk display application for Raspberry Pi. Built with Next.js and TypeScript.
 
 ## Features
 
-- 🕐 Clock (with timezone support)
+- 🕐 Clock (with timezone and date format customization)
 - 🌤️ Weather (temperature, humidity, wind speed)
 - 📅 Calendar (Google Calendar integration)
 - 📰 News (RSS feeds)
-- ⚙️ Web-based settings page
+- ⚙️ Web-based settings page with auto-detection
+  - Browser timezone detection
+  - Geolocation-based coordinates
+  - Google Maps integration
 
 ## Requirements
 
@@ -36,11 +39,15 @@ The installation script automatically handles:
 ./scripts/update.sh
 ```
 
-Automatically fetches the latest code, builds, and restarts the service:
+Automatically fetches the latest code and builds without interrupting the service:
 - git pull (latest code)
 - npm install (update dependencies)
 - npm run build (rebuild)
-- systemctl restart (restart service)
+
+**Important**: After running update.sh, restart the service to apply changes:
+```bash
+sudo systemctl restart rpi-kiosk
+```
 
 ## Uninstall
 
@@ -52,9 +59,23 @@ Only removes the systemd service. App files and system packages are retained.
 
 ## Configuration
 
+### Auto-Detection (First Time)
+
+On first visit, the application automatically detects:
+- **Timezone**: From browser settings (e.g., America/New_York)
+- **City**: Extracted from timezone (e.g., New York)
+- **Coordinates**: Via browser geolocation (with permission)
+
 ### Method 1: Web UI (Recommended)
 
 Click the `Settings` button in the browser to make changes.
+
+Features:
+- Timezone dropdown with all IANA timezones (grouped by region)
+- "Use Browser Default" buttons for timezone and city
+- "Detect Location" button for coordinates
+- "View on Google Maps" to verify location
+- Date format selector (7 formats available)
 
 ### Method 2: Configuration File (config.json)
 
@@ -77,16 +98,20 @@ Manage settings with shell script:
 ./scripts/config.sh list
 ```
 
-**Priority**: Browser settings > config.json > defaults
+**Priority**: localStorage > config.json > browser-detected > defaults
+
+**Smart Merge**: If config.json values match defaults (e.g., Asia/Seoul, Seoul, 37.5665/126.978), browser-detected values are used instead. Only explicitly different values override auto-detection.
 
 ### Configuration Options
 
 **Time**
-- Timezone (e.g., Asia/Seoul)
-- Date format
+- Timezone (dropdown with all IANA timezones)
+- Date format (7 predefined formats)
+- Time server (optional)
 
 **Weather**
-- City name, latitude/longitude
+- City name (with browser default button)
+- Latitude/longitude (with geolocation detection)
 - Refresh interval (minutes)
 
 **Calendar**
@@ -164,7 +189,9 @@ lib/
 scripts/
 ├── install.sh        # Installation and service registration
 ├── uninstall.sh      # Service removal
-└── start-kiosk.sh    # Kiosk launcher
+├── update.sh         # Update code and rebuild (no restart)
+├── start-kiosk.sh    # Kiosk launcher
+└── config.sh         # Configuration file management
 ```
 
 ## Troubleshooting

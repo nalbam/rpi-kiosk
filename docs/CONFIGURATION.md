@@ -1,9 +1,33 @@
 # Configuration
 
+## Auto-Detection
+
+On first visit, the application automatically detects and applies:
+
+- **Timezone**: Browser's timezone (via `Intl.DateTimeFormat().resolvedOptions().timeZone`)
+- **City**: Extracted from timezone string (e.g., "America/New_York" → "New York")
+- **Coordinates**: Browser geolocation API (requires user permission)
+
+This happens only on the first visit before any manual configuration is saved.
+
 ## Configuration Methods
 
 ### 1. Web UI (Recommended)
-Click the Settings button in the browser
+
+Click the Settings button in the browser.
+
+**Features**:
+- **Timezone**: Dropdown with all IANA timezones, grouped by region (Africa, America, Asia, etc.)
+  - "Use Browser Default" button to apply detected timezone
+- **Date Format**: Dropdown with 7 predefined formats
+- **City**: Text input with "Use Browser Default" button
+- **Coordinates**: Numeric inputs with two helper buttons:
+  - "Detect Location" - Triggers browser geolocation
+  - "View on Google Maps" - Opens current coordinates in Google Maps
+- **Calendar URL**: Text input for Google Calendar iCal URL
+- **RSS Feeds**: Add/remove feed URLs
+- **Refresh Intervals**: Configure update frequency for each data source
+- **Display Limits**: Number of items to show
 
 ### 2. Shell Script (config.json)
 
@@ -26,7 +50,22 @@ sudo apt-get install jq
 ./scripts/config.sh list
 ```
 
-**Priority**: localStorage > config.json > defaults
+**Priority**: localStorage > config.json > browser-detected > defaults
+
+**Smart Merge**: When `config.json` exists, the app compares each value to defaults:
+- If `config.json` value **differs** from default → Use `config.json` value
+- If `config.json` value **matches** default → Use browser-detected value
+
+Example:
+```
+config.json: timezone = "Asia/Seoul" (same as default)
+Browser detected: timezone = "America/New_York"
+→ Result: "America/New_York" (browser wins because config matches default)
+
+config.json: timezone = "Europe/London" (different from default)
+Browser detected: timezone = "America/New_York"
+→ Result: "Europe/London" (config wins because it's explicitly set)
+```
 
 ## Default Configuration
 
@@ -57,11 +96,27 @@ sudo apt-get install jq
 
 ## Timezones
 
+The settings page provides a dropdown with **all IANA timezones** (600+), grouped by region:
+- Africa
+- America
+- Antarctica
+- Arctic
+- Asia
+- Atlantic
+- Australia
+- Europe
+- Indian
+- Pacific
+- UTC and others
+
+**Examples**:
 - `Asia/Seoul` - Korea
 - `Asia/Tokyo` - Japan
 - `America/New_York` - US Eastern
 - `America/Los_Angeles` - US Pacific
 - `Europe/London` - UK
+
+The dropdown automatically loads all available timezones using `Intl.supportedValuesOf('timeZone')`.
 
 Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
@@ -78,7 +133,15 @@ Choose from these formats in settings:
 
 ## Weather Coordinates
 
-Find coordinates: https://www.latlong.net/
+**Auto-Detection**: The settings page includes a "Detect Location" button that uses the browser's Geolocation API to automatically fill in your coordinates.
+
+**Manual Entry**:
+- Latitude: -90 to 90
+- Longitude: -180 to 180
+
+**Verification**: Click "View on Google Maps" to verify the coordinates are correct. This opens Google Maps at the specified location.
+
+**Find Coordinates Manually**: https://www.latlong.net/
 
 ## Google Calendar
 
