@@ -13,6 +13,10 @@ export interface KioskConfig {
     calendar: number; // in minutes
     rss: number; // in minutes
   };
+  displayLimits: {
+    calendarEvents: number; // number of calendar events to display
+    rssItems: number; // number of RSS items to display in carousel
+  };
 }
 
 export const defaultConfig: KioskConfig = {
@@ -29,5 +33,9 @@ export const defaultConfig: KioskConfig = {
     weather: 30,
     calendar: 15,
     rss: 15,
+  },
+  displayLimits: {
+    calendarEvents: 5,
+    rssItems: 7,
   }
 };

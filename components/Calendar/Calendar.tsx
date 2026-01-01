@@ -106,11 +106,15 @@ export default function Calendar() {
     );
   }
 
+  const config = getConfig();
+  const displayLimit = config.displayLimits.calendarEvents;
+  const displayEvents = events.slice(0, displayLimit);
+
   return (
     <div className="bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col">
       <h2 className="text-vw-xl font-semibold mb-vw-sm">일정</h2>
       <div className="space-y-vw-xs overflow-y-auto flex-1 min-h-0">
-        {events.map((event, index) => {
+        {displayEvents.map((event, index) => {
           const startDate = new Date(event.start);
           const endDate = new Date(event.end);
           const isSingleDay = isSameDay(startDate, endDate);

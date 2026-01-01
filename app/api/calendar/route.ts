@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import ICAL from 'ical.js';
 import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
-import { API, DISPLAY } from '@/lib/constants';
+import { API, PROCESSING_LIMITS } from '@/lib/constants';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
 
     const now = new Date();
     const oneMonthFromNow = new Date();
-    oneMonthFromNow.setDate(now.getDate() + DISPLAY.CALENDAR_DAYS_AHEAD);
+    oneMonthFromNow.setDate(now.getDate() + PROCESSING_LIMITS.CALENDAR_DAYS_AHEAD);
 
     const events = vevents
       .map((vevent: any) => {
@@ -55,8 +55,7 @@ export async function GET(request: Request) {
         // Show events that haven't ended yet and start within the next month
         return event.end >= now && event.start <= oneMonthFromNow;
       })
-      .sort((a: any, b: any) => a.start.getTime() - b.start.getTime())
-      .slice(0, DISPLAY.MAX_CALENDAR_EVENTS);
+      .sort((a: any, b: any) => a.start.getTime() - b.start.getTime());
 
     return NextResponse.json({ events });
   } catch (error) {

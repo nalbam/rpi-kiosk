@@ -61,7 +61,7 @@ export default function RSS() {
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % items.length);
-    }, 10000); // Change every 10 seconds
+    }, 10000); // 10 seconds - matches PROCESSING_LIMITS.RSS_CAROUSEL_INTERVAL_MS
 
     return () => clearInterval(interval);
   }, [items.length]);
@@ -95,8 +95,11 @@ export default function RSS() {
     );
   }
 
+  const config = getConfig();
+  const displayLimit = config.displayLimits.rssItems;
+
   const displayItems = items.length > 0
-    ? Array.from({ length: Math.min(5, items.length) }).map((_, i) => items[(currentIndex + i) % items.length])
+    ? Array.from({ length: Math.min(displayLimit, items.length) }).map((_, i) => items[(currentIndex + i) % items.length])
     : [];
 
   return (
@@ -126,7 +129,7 @@ export default function RSS() {
         ))}
       </div>
       <div className="mt-vw-sm flex justify-center space-x-2">
-        {Array.from({ length: Math.min(items.length, 5) }).map((_, index) => (
+        {Array.from({ length: Math.min(items.length, displayLimit) }).map((_, index) => (
           <div
             key={index}
             className={`w-2 h-2 rounded-full ${

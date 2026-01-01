@@ -232,6 +232,27 @@ export default function SettingsPage() {
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">표시할 일정 개수</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={config.displayLimits.calendarEvents}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value >= 1 && value <= 10) {
+                      setConfig({
+                        ...config,
+                        displayLimits: { ...config.displayLimits, calendarEvents: value }
+                      });
+                    }
+                  }}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">1 ~ 10</p>
+              </div>
             </div>
           </div>
 
@@ -297,6 +318,27 @@ export default function SettingsPage() {
                   }}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">표시할 뉴스 개수</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={config.displayLimits.rssItems}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value >= 1 && value <= 10) {
+                      setConfig({
+                        ...config,
+                        displayLimits: { ...config.displayLimits, rssItems: value }
+                      });
+                    }
+                  }}
+                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">1 ~ 10</p>
               </div>
             </div>
           </div>

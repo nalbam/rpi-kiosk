@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Parser from 'rss-parser';
 import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
+import { API, PROCESSING_LIMITS } from '@/lib/constants';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -32,14 +33,14 @@ export async function GET(request: Request) {
 
       try {
         // Fetch RSS feed with timeout protection
-        const response = await fetchWithTimeout(trimmedUrl, 10000, 5 * 1024 * 1024);
+        const response = await fetchWithTimeout(trimmedUrl, API.TIMEOUT_MS, API.MAX_RSS_SIZE);
         const xmlText = await response.text();
 
         // Parse the RSS feed
         const parser = new Parser();
         const feed = await parser.parseString(xmlText);
 
-        const items = feed.items.slice(0, 10).map(item => ({
+        const items = feed.items.slice(0, PROCESSING_LIMITS.MAX_RSS_ITEMS_PER_FEED).map(item => ({
           title: item.title || '',
           link: item.link || '',
           pubDate: item.pubDate || item.isoDate || new Date().toISOString(),
@@ -61,10 +62,10 @@ export async function GET(request: Request) {
       );
     }
 
-    // Sort by date and limit to 20 items
+    // Sort by date and limit total items
     const sortedItems = allItems
       .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
-      .slice(0, 20);
+      .slice(0, PROCESSING_LIMITS.MAX_RSS_ITEMS_TOTAL);
 
     return NextResponse.json({ items: sortedItems });
   } catch (error) {
