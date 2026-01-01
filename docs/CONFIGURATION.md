@@ -1,8 +1,6 @@
-# RPI Kiosk Configuration Example
+# Configuration
 
-## Default Configuration
-
-The application comes with these default settings:
+## 기본 설정
 
 ```json
 {
@@ -12,6 +10,7 @@ The application comes with these default settings:
     "lon": 126.9780,
     "city": "Seoul"
   },
+  "calendarUrl": "",
   "rssFeeds": [
     "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
   ],
@@ -19,57 +18,56 @@ The application comes with these default settings:
     "weather": 30,
     "calendar": 15,
     "rss": 15
+  },
+  "displayLimits": {
+    "calendarEvents": 5,
+    "rssItems": 7
   }
 }
 ```
 
-## Customization
+## 타임존
 
-### Timezones
-Common timezone values:
-- `Asia/Seoul` - Korea
-- `Asia/Tokyo` - Japan
-- `America/New_York` - US Eastern
-- `America/Los_Angeles` - US Pacific
-- `Europe/London` - UK
-- `Europe/Paris` - France/Germany
+- `Asia/Seoul` - 한국
+- `Asia/Tokyo` - 일본
+- `America/New_York` - 미국 동부
+- `America/Los_Angeles` - 미국 서부
+- `Europe/London` - 영국
 
-Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+전체 목록: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-### Weather Locations
-To find coordinates for your city:
-1. Visit https://www.latlong.net/
-2. Search for your city
-3. Copy the latitude and longitude values
+## 날씨 좌표
 
-### Google Calendar Setup
-1. Open Google Calendar (https://calendar.google.com)
-2. Click on the calendar you want to display
-3. Click "Settings and sharing"
-4. Scroll to "Integrate calendar"
-5. Copy the "Secret address in iCal format" URL
-6. Paste into the settings page
+좌표 찾기: https://www.latlong.net/
 
-### RSS Feeds
-Popular Korean RSS Feeds:
-- Google News Korea: `https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko`
-- Naver News: `https://news.naver.com/mainRss.nhn`
-- Daum News: `https://media.daum.net/rss/`
+## Google Calendar
 
-International RSS Feeds:
-- BBC News: `https://feeds.bbci.co.uk/news/rss.xml`
+1. Google Calendar → 설정 및 공유
+2. 캘린더 통합 → 비공개 주소
+3. iCal 형식 URL 복사
+
+## RSS 피드
+
+**한국**
+- Google News: `https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko`
+
+**해외**
+- BBC: `https://feeds.bbci.co.uk/news/rss.xml`
 - CNN: `http://rss.cnn.com/rss/edition.rss`
-- The Guardian: `https://www.theguardian.com/world/rss`
 - Reuters: `https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best`
 
-### Refresh Intervals
-- **Weather**: Recommended 30-60 minutes (weather doesn't change that often)
-- **Calendar**: Recommended 15-30 minutes
-- **RSS**: Recommended 15-30 minutes (depending on feed update frequency)
+## 새로고침 간격 (분)
 
-## Notes
+- Weather: 30-60 권장
+- Calendar: 15-30 권장
+- RSS: 15-30 권장
 
-- All settings are stored in browser localStorage
-- Settings persist across browser restarts
-- To reset to defaults, use the "초기화" (Reset) button in settings
-- Configuration is per-browser (if you use multiple devices, configure each separately)
+## 표시 개수
+
+- Calendar: 1-10 (기본 5)
+- RSS: 1-10 (기본 7)
+
+## 저장 위치
+
+- Browser localStorage
+- 초기화: 설정 페이지 → 초기화 버튼

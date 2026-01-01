@@ -1,209 +1,119 @@
 # Development Guide
 
-## Prerequisites
+## 요구사항
 
-- Node.js 22 LTS or higher
-- npm or yarn package manager
+- Node.js 22 LTS
+- npm
 
-## Setup Development Environment
+## 개발 환경 설정
 
-1. Clone the repository:
 ```bash
 git clone https://github.com/nalbam/rpi-kiosk.git
 cd rpi-kiosk
-```
-
-2. Install dependencies:
-```bash
 npm install
-```
-
-3. Run the development server:
-```bash
 npm run dev
 ```
 
-4. Open http://localhost:3000 in your browser
+http://localhost:3000
 
-## Project Structure
+## 프로젝트 구조
 
 ```
-rpi-kiosk/
-├── app/                      # Next.js App Router
-│   ├── api/                  # API Routes
-│   │   ├── calendar/        # Calendar API endpoint
-│   │   ├── rss/             # RSS feed API endpoint
-│   │   └── weather/         # Weather API endpoint
-│   ├── settings/            # Settings page
-│   ├── layout.tsx           # Root layout
-│   ├── page.tsx             # Main dashboard page
-│   └── globals.css          # Global styles
-├── components/              # React Components
-│   ├── Calendar/           # Calendar widget
-│   ├── Clock/              # Clock widget
-│   ├── RSS/                # RSS news widget
-│   └── Weather/            # Weather widget
-├── lib/                    # Utility Libraries
-│   ├── config.ts          # Configuration types and defaults
-│   ├── storage.ts         # LocalStorage management
-│   └── urlValidation.ts   # SSRF protection utilities
-├── scripts/               # Installation & Deployment Scripts
-│   ├── install.sh        # Installation script for RPI
-│   ├── start-kiosk.sh    # Kiosk mode startup script
-│   └── rpi-kiosk.service # Systemd service file
-├── types/                # TypeScript type declarations
-│   └── ical.js.d.ts     # Type definitions for ical.js
-├── public/               # Static assets
-└── README.md            # Main documentation
+app/
+├── api/              # API Routes
+│   ├── calendar/
+│   ├── rss/
+│   └── weather/
+├── settings/
+├── layout.tsx
+├── page.tsx
+└── globals.css
+
+components/
+├── Calendar/
+├── Clock/
+├── RSS/
+└── Weather/
+
+lib/
+├── config.ts         # 설정 타입 및 기본값
+├── constants.ts      # 시스템 상수 (API 제한, 검증 범위)
+├── storage.ts        # localStorage 관리
+└── urlValidation.ts  # SSRF 보호
+
+scripts/
+├── install.sh
+├── uninstall.sh
+└── start-kiosk.sh
 ```
 
-## Available Scripts
+## 스크립트
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
+- `npm run dev` - 개발 서버
+- `npm run build` - 프로덕션 빌드
+- `npm start` - 프로덕션 실행
+- `npm run lint` - ESLint
 
-## Development Guidelines
+## 개발 가이드
 
-### Code Style
+### 코드 스타일
 
-- Use TypeScript for all new files
-- Follow the existing code structure
-- Use functional components with hooks
-- Use Tailwind CSS for styling
-- Keep components small and focused
+- TypeScript 사용
+- Functional components + hooks
+- Tailwind CSS
+- 작고 집중된 컴포넌트
 
-### Adding New Features
+### 새 기능 추가
 
-1. Create a new component in the `components/` directory
-2. If the feature needs backend data, add an API route in `app/api/`
-3. Update the configuration types in `lib/config.ts` if needed
-4. Add the component to the main page (`app/page.tsx`)
-5. Update the settings page if configuration is needed
+1. `components/` 에 컴포넌트 생성
+2. 필요시 `app/api/` 에 API 라우트 추가
+3. `lib/config.ts` 설정 타입 업데이트
+4. `app/page.tsx` 에 컴포넌트 추가
+5. 설정 페이지 업데이트
 
-### Testing
+### API 라우트 패턴
 
-Before committing:
-1. Run `npm run lint` to check for code issues
-2. Run `npm run build` to ensure the project builds
-3. Test your changes in the browser
-4. Check both desktop and mobile layouts
-
-### API Integration
-
-All API routes follow this pattern:
-- Located in `app/api/[feature]/route.ts`
-- Export a `GET` function (or other HTTP methods)
-- Return `NextResponse.json()` for responses
-- Handle errors gracefully with try/catch
-- Return appropriate HTTP status codes
-
-Example:
 ```typescript
 import { NextResponse } from 'next/server';
-
-export async function GET(request: Request) {
-  try {
-    // Your logic here
-    return NextResponse.json({ data: 'success' });
-  } catch (error) {
-    console.error('Error:', error);
-    return NextResponse.json(
-      { error: 'Error message' },
-      { status: 500 }
-    );
-  }
-}
-```
-
-### Security: SSRF Protection
-
-All API routes that fetch external URLs **MUST** use security utilities from `@/lib/urlValidation`:
-
-#### Required Functions
-
-**`validateCalendarUrl(url: string)`**
-- Validates URLs to prevent Server-Side Request Forgery (SSRF) attacks
-- Blocks non-HTTP(S) protocols
-- Blocks localhost, loopback, and private IP ranges
-- Blocks cloud metadata services (169.254.169.254, etc.)
-- Blocks privileged and dangerous ports
-- Returns: `{ valid: boolean, error?: string }`
-
-**`fetchWithTimeout(url: string, timeoutMs?: number, maxSize?: number, redirectCount?: number)`**
-- Fetches URLs with timeout and size limit protection
-- Default timeout: 10 seconds
-- Default max size: 10MB
-- Follows up to 5 redirects
-- Returns: Promise<Response>
-
-#### Example Usage
-
-```typescript
 import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
+import { API, PROCESSING_LIMITS } from '@/lib/constants';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const userUrl = searchParams.get('url');
+  const url = searchParams.get('url');
 
-  if (!userUrl) {
+  if (!url) {
     return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
   }
 
-  // Step 1: Validate the URL
-  const validation = validateCalendarUrl(userUrl);
+  // SSRF 검증 필수
+  const validation = validateCalendarUrl(url);
   if (!validation.valid) {
-    return NextResponse.json(
-      { error: validation.error },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
   try {
-    // Step 2: Fetch with timeout and size limits
-    const response = await fetchWithTimeout(
-      userUrl,
-      10000,  // 10 second timeout
-      5 * 1024 * 1024  // 5MB max size
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch data');
-    }
-
+    // 타임아웃과 크기 제한 적용
+    const response = await fetchWithTimeout(url, API.TIMEOUT_MS, API.MAX_RSS_SIZE);
     const data = await response.text();
     return NextResponse.json({ data });
   } catch (error) {
-    console.error('Fetch error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch external data' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Fetch failed' }, { status: 500 });
   }
 }
 ```
 
-#### Security Checklist for New API Routes
+### 보안 체크리스트
 
-- [ ] Import `validateCalendarUrl` and `fetchWithTimeout`
-- [ ] Validate ALL user-provided URLs before fetching
-- [ ] Use `fetchWithTimeout()` instead of native `fetch()`
-- [ ] Handle validation errors with 400 status
-- [ ] Set appropriate timeout values
-- [ ] Set appropriate size limits
-- [ ] Test with malicious URLs (localhost, private IPs, etc.)
+외부 URL을 가져오는 모든 API 라우트는:
+- [ ] `validateCalendarUrl()` 로 URL 검증
+- [ ] `fetchWithTimeout()` 사용
+- [ ] `constants.ts` 의 상수 사용
+- [ ] 검증 실패 시 400 반환
+- [ ] 적절한 타임아웃과 크기 제한 설정
 
-### Component Guidelines
+### 컴포넌트 패턴
 
-Components should:
-- Be self-contained
-- Handle their own loading and error states
-- Use the `'use client'` directive if they use hooks
-- Fetch their own data using the API routes
-- Respect the refresh intervals from configuration
-
-Example component structure:
 ```typescript
 'use client';
 
@@ -220,7 +130,7 @@ export default function MyWidget() {
       const data = await response.json();
       setData(data);
     } catch (error) {
-      console.error('Failed to fetch:', error);
+      console.error('Failed:', error);
     } finally {
       setLoading(false);
     }
@@ -229,94 +139,76 @@ export default function MyWidget() {
   useEffect(() => {
     fetchData();
     const config = getConfig();
-    const interval = setInterval(fetchData, config.refreshIntervals.myFeature * 60 * 1000);
+    const interval = setInterval(
+      fetchData,
+      config.refreshIntervals.myFeature * 60 * 1000
+    );
     return () => clearInterval(interval);
   }, []);
 
   if (loading) return <div>Loading...</div>;
-  if (!data) return <div>No data</div>;
-
-  return <div>{/* Your UI */}</div>;
+  return <div>{/* UI */}</div>;
 }
 ```
 
-## Building for Production
+## 상수 관리
 
-1. Build the application:
-```bash
-npm run build
+### constants.ts (시스템 제약)
+
+```typescript
+export const API = {
+  TIMEOUT_MS: 10000,
+  MAX_RSS_SIZE: 5 * 1024 * 1024,
+} as const;
+
+export const PROCESSING_LIMITS = {
+  MAX_RSS_ITEMS_PER_FEED: 10,
+  MAX_RSS_ITEMS_TOTAL: 20,
+} as const;
 ```
 
-2. Start the production server:
+### config.ts (사용자 설정)
+
+```typescript
+export interface KioskConfig {
+  timezone: string;
+  refreshIntervals: { weather: number; calendar: number; rss: number };
+  displayLimits: { calendarEvents: number; rssItems: number };
+  // ...
+}
+```
+
+## 빌드 및 배포
+
 ```bash
+npm run build
 npm start
 ```
 
-The application will be available at http://localhost:3000
+라즈베리파이 배포: `./scripts/install.sh` 참조
 
-## Deployment on Raspberry Pi
+## Node.js 버전
 
-See the main README.md for detailed deployment instructions.
+`.nvmrc` 파일 포함:
 
-## Contributing
+```bash
+nvm use
+```
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/my-feature`)
-3. Make your changes
-4. Test thoroughly
-5. Commit your changes (`git commit -am 'Add my feature'`)
-6. Push to the branch (`git push origin feature/my-feature`)
-7. Create a Pull Request
+## 문제 해결
 
-## Troubleshooting
-
-### Port already in use
-If port 3000 is already in use, you can specify a different port:
+**포트 사용 중**
 ```bash
 PORT=3001 npm run dev
 ```
 
-### Dependencies issues
-Try removing node_modules and reinstalling:
+**의존성 문제**
 ```bash
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-### Build errors
-Make sure you're using Node.js 22 LTS or higher:
+**빌드 오류**
 ```bash
-node --version
+node --version  # v22.x.x 확인
 ```
-
-## Node.js Version Management
-
-This project requires Node.js 22 LTS. We recommend using nvm (Node Version Manager) for easy version switching.
-
-### Using nvm
-
-```bash
-# Install and use Node.js 22
-nvm install 22
-nvm use 22
-
-# Or simply (with .nvmrc file):
-nvm use
-
-# Verify version
-node --version  # Should show v22.x.x
-```
-
-### .nvmrc File
-
-This project includes a `.nvmrc` file. If you're using nvm, simply run:
-
-```bash
-nvm use
-```
-
-This will automatically switch to Node.js 22.
-
-## License
-
-MIT License - see LICENSE file for details
