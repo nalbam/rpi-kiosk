@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { fetchWithTimeout } from '@/lib/urlValidation';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -12,10 +13,37 @@ export async function GET(request: Request) {
     );
   }
 
+  // Validate coordinates are valid numbers within acceptable ranges
+  const latNum = parseFloat(lat);
+  const lonNum = parseFloat(lon);
+
+  if (isNaN(latNum) || isNaN(lonNum)) {
+    return NextResponse.json(
+      { error: 'Invalid latitude or longitude values' },
+      { status: 400 }
+    );
+  }
+
+  if (latNum < -90 || latNum > 90) {
+    return NextResponse.json(
+      { error: 'Latitude must be between -90 and 90' },
+      { status: 400 }
+    );
+  }
+
+  if (lonNum < -180 || lonNum > 180) {
+    return NextResponse.json(
+      { error: 'Longitude must be between -180 and 180' },
+      { status: 400 }
+    );
+  }
+
   try {
     // Using Open-Meteo API (free, no API key required)
-    const response = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`
+    const response = await fetchWithTimeout(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`,
+      10000, // 10 second timeout
+      1024 * 1024 // 1MB max size
     );
 
     if (!response.ok) {

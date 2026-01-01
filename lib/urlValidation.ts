@@ -141,32 +141,102 @@ function isAllowedIP(ip: string, version: number): boolean {
 
 /**
  * Fetches a URL with timeout protection
+ * Uses https module with IPv4 preference to avoid IPv6 timeout issues in WSL
  */
 export async function fetchWithTimeout(
   url: string,
   timeoutMs: number = 10000,
-  maxSize: number = 10 * 1024 * 1024 // 10MB default
+  maxSize: number = 10 * 1024 * 1024, // 10MB default
+  redirectCount: number = 0
 ): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return new Promise((resolve, reject) => {
+    // Prevent infinite redirect loops (max 5 redirects)
+    if (redirectCount > 5) {
+      reject(new Error('Too many redirects'));
+      return;
+    }
+    const https = require('https');
+    const http = require('http');
+    const { URL } = require('url');
 
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      redirect: 'follow', // Follow redirects but limit to default (20)
+    const parsedUrl = new URL(url);
+    const isHttps = parsedUrl.protocol === 'https:';
+    const client = isHttps ? https : http;
+
+    const options = {
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port || (isHttps ? 443 : 80),
+      path: parsedUrl.pathname + parsedUrl.search,
+      method: 'GET',
+      family: 4, // Force IPv4 to avoid IPv6 timeout issues in WSL
+      timeout: timeoutMs,
       headers: {
         'User-Agent': 'RPI-Kiosk/1.0',
       },
+    };
+
+    const req = client.request(options, (res: any) => {
+      // Check response size
+      const contentLength = res.headers['content-length'];
+      if (contentLength && parseInt(contentLength, 10) > maxSize) {
+        req.destroy();
+        reject(new Error('Response size exceeds maximum allowed'));
+        return;
+      }
+
+      // Handle redirects manually (follow up to 5 redirects)
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        const redirectUrl = new URL(res.headers.location, url).toString();
+        fetchWithTimeout(redirectUrl, timeoutMs, maxSize, redirectCount + 1).then(resolve).catch(reject);
+        return;
+      }
+
+      // Collect response data
+      const chunks: Buffer[] = [];
+      let totalSize = 0;
+
+      res.on('data', (chunk: Buffer) => {
+        totalSize += chunk.length;
+        if (totalSize > maxSize) {
+          req.destroy();
+          reject(new Error('Response size exceeds maximum allowed'));
+          return;
+        }
+        chunks.push(chunk);
+      });
+
+      res.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        const text = buffer.toString('utf-8');
+
+        // Create a Response-like object
+        const response = {
+          ok: res.statusCode >= 200 && res.statusCode < 300,
+          status: res.statusCode,
+          statusText: res.statusMessage,
+          headers: {
+            get: (name: string) => res.headers[name.toLowerCase()] || null,
+          },
+          text: async () => text,
+          json: async () => {
+            try {
+              return JSON.parse(text);
+            } catch {
+              throw new Error('Invalid JSON response');
+            }
+          },
+        } as Response;
+
+        resolve(response);
+      });
     });
 
-    // Check response size
-    const contentLength = response.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > maxSize) {
-      throw new Error('Response size exceeds maximum allowed');
-    }
+    req.on('error', (err: Error) => reject(err));
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('Request timeout'));
+    });
 
-    return response;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+    req.end();
+  });
 }
