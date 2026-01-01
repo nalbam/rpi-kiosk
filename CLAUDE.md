@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RPI Hub is a Raspberry Pi kiosk mode display application built with Next.js 14 (App Router) and TypeScript. It displays clock, weather, calendar, and RSS news feeds in a clean, modern dashboard.
+RPI Hub is a Raspberry Pi kiosk mode display application built with Next.js 16 (App Router) and TypeScript. It displays clock, weather, calendar, and RSS news feeds in a clean, modern dashboard.
 
 ## Development Commands
 
@@ -39,8 +39,14 @@ RPI Hub is a Raspberry Pi kiosk mode display application built with Next.js 14 (
 - `getConfig()` - Reads from server via `/api/config`, which loads `config.json` with fallback to `defaultConfig`
 - `saveConfig()` - Persists updates to server via POST `/api/config`, which writes to `config.json`
 - `detectBrowserSettings()` - Auto-detects timezone, city, and language/country for Google News RSS
-- `detectGeolocation()` - Requests browser geolocation for weather coordinates
-- `initializeConfig()` - First-visit setup: detects browser settings and creates `config.json` if absent
+- `detectGeolocation()` - Requests browser geolocation for weather coordinates (GPS-based)
+- `detectLocationByIP()` - Detects location via IP address using ipapi.co service (fallback method)
+- `initializeConfig()` - First-visit setup with multi-layer detection:
+  1. Parallel execution: GPS geolocation + IP-based detection
+  2. Priority: GPS → IP → Geocoding → defaults
+  3. Reverse geocoding for GPS coordinates to get city name
+  4. Forward geocoding for city names to get timezone
+  5. Auto-save to `config.json`
 
 #### Security (`lib/urlValidation.ts`)
 CRITICAL: All external URLs (calendar, RSS) MUST pass through `validateCalendarUrl()` to prevent SSRF attacks.
@@ -56,6 +62,10 @@ Blocked patterns:
 `fetchWithTimeout()` enforces:
 - Configurable timeout (default 10s)
 - Maximum response size (default 10MB)
+- IPv4 enforcement (resolves WSL IPv6 timeout issues)
+- User-Agent header for proper identification
+- Automatic redirect handling (max 5 redirects)
+- Chunk-by-chunk size validation
 - Abort signal for cancellation
 
 #### API Routes Pattern
@@ -70,42 +80,72 @@ All API routes (`app/api/*/route.ts`) follow this structure:
 #### Component Pattern
 All widget components (`components/*/`) follow this pattern:
 - Client components (`'use client'`)
-- Manage local state (data, loading, error)
+- Use `useWidgetData<T>` hook for centralized data fetching and auto-refresh
+- Wrapped in `ErrorBoundary` for isolated error handling
 - Read config via `getConfig()` on mount and for refresh intervals
 - Fetch from `/api/*` routes
-- Use `useEffect` with `setInterval` for auto-refresh (cleanup on unmount)
+- Auto-refresh via `useAutoRefresh` hook with cleanup on unmount
 - Render loading state, error state, and data state
+
+#### Shared Components (`components/shared/`)
+- `WidgetContainer` - Unified widget styling (bg-gray-900, border-gray-800, rounded-lg)
+- `ErrorBoundary` - React Error Boundary for widget-level error isolation with retry functionality
+- `Toast` - Notification system for success/error messages with auto-hide timer
+
+#### Custom Hooks (`lib/hooks/`)
+- `useWidgetData<T>` - Generic data fetching with auto-refresh and error handling
+- `useAutoRefresh` - Configurable interval-based refresh logic
+- `useConfigWithRetry` - Configuration loading with automatic retry on failure
 
 ### File Organization
 ```
 app/
-├── api/              # Server-side API routes
-│   ├── calendar/     # Google Calendar iCal fetching
-│   ├── config/       # Configuration file (config.json) management
-│   ├── rss/          # RSS feed aggregation
-│   └── weather/      # Open-Meteo API integration
-├── settings/         # Settings page (client component)
-├── layout.tsx        # Root layout with metadata
-└── page.tsx          # Main dashboard (client component)
+├── api/                      # Server-side API routes
+│   ├── calendar/route.ts     # Google Calendar iCal fetching
+│   ├── config/route.ts       # Configuration file (config.json) management
+│   ├── geocoding/route.ts    # Open-Meteo geocoding (city → coordinates)
+│   ├── reverse-geocoding/route.ts  # Nominatim reverse geocoding (coordinates → city)
+│   ├── rss/route.ts          # RSS feed aggregation
+│   └── weather/route.ts      # Open-Meteo API integration
+├── settings/                 # Settings page
+│   ├── page.tsx              # Main settings page
+│   └── components/           # Settings sub-components
+│       ├── LocationSettings.tsx   # Timezone, city, coordinates configuration
+│       ├── CalendarSettings.tsx   # Google Calendar URL configuration
+│       └── RSSSettings.tsx        # RSS feed management
+├── layout.tsx                # Root layout with metadata
+├── page.tsx                  # Main dashboard (client component)
+└── globals.css               # Tailwind CSS and custom animations
 
-components/           # Reusable widgets
-├── Calendar/         # Calendar events display
-├── Clock/            # Time display with timezone support
-├── RSS/              # RSS news feed aggregator
-└── Weather/          # Weather widget with icons
+components/                   # Reusable widgets
+├── Calendar/Calendar.tsx     # Calendar events display with all-day event support
+├── Clock/Clock.tsx           # Time display with timezone support
+├── RSS/RSS.tsx               # RSS news feed with automatic carousel
+├── Weather/Weather.tsx       # Weather widget with animated icons
+└── shared/                   # Shared UI components
+    ├── WidgetContainer.tsx   # Unified widget wrapper
+    ├── ErrorBoundary.tsx     # Error isolation boundary
+    └── Toast.tsx             # Notification system
 
-lib/                  # Shared utilities
-├── config.ts         # Configuration types and defaults
-├── constants.ts      # System constants (API limits, validation ranges)
-├── storage.ts        # Configuration management and browser detection
-└── urlValidation.ts  # SSRF protection utilities
+lib/                          # Shared utilities
+├── config.ts                 # Configuration types and defaults
+├── constants.ts              # System constants (API limits, validation ranges)
+├── storage.ts                # Configuration management and browser detection
+├── urlValidation.ts          # SSRF protection utilities
+├── validation.ts             # Input validation (coordinates, etc.)
+├── apiHelpers.ts             # API response creation helpers
+├── configHelpers.ts          # Server-side config loading and merging
+└── hooks/                    # Custom React hooks
+    ├── useWidgetData.ts      # Generic data fetching with auto-refresh
+    ├── useAutoRefresh.ts     # Interval-based refresh logic
+    └── useConfigWithRetry.ts # Configuration loading with retry
 
-scripts/              # Deployment and management scripts
-├── config.sh         # Configuration file (config.json) CLI management
-├── install.sh        # Automated installation for Raspberry Pi
-├── start-kiosk.sh    # Launch kiosk mode
-├── uninstall.sh      # Service removal
-└── update.sh         # Update code and rebuild (no restart)
+scripts/                      # Deployment and management scripts
+├── config.sh                 # Configuration file (config.json) CLI management
+├── install.sh                # Automated installation for Raspberry Pi
+├── start-kiosk.sh            # Launch kiosk mode
+├── uninstall.sh              # Service removal
+└── update.sh                 # Update code and rebuild (no restart)
 ```
 
 ## Technology Stack
@@ -114,10 +154,14 @@ scripts/              # Deployment and management scripts
 - **Language**: TypeScript 5
 - **UI Library**: React 19.2.3
 - **Styling**: Tailwind CSS 3.4.19
+- **Icons**: lucide-react 0.562.0
 - **Date Handling**: date-fns 4.1.0, date-fns-tz 3.2.0
 - **Calendar Parsing**: ical.js 1.5.0
 - **RSS Parsing**: rss-parser 3.13.0
 - **Weather API**: Open-Meteo (free, no API key)
+- **Geocoding APIs**:
+  - Open-Meteo Geocoding (city → coordinates)
+  - Nominatim/OpenStreetMap (coordinates → city)
 
 ## Important Patterns
 
@@ -139,14 +183,98 @@ When adding API routes that fetch external URLs:
 New widgets should:
 - Be placed in `components/{WidgetName}/{WidgetName}.tsx`
 - Use the client component pattern with loading/error states
-- Read configuration from `getConfig()`
-- Implement auto-refresh with cleanup
+- Use `useWidgetData<T>` hook for consistent data fetching
+- Read configuration from `getConfig()` or `useConfigWithRetry()`
+- Implement auto-refresh with cleanup using `useAutoRefresh`
+- Wrap with `ErrorBoundary` for isolated error handling
+- Use `WidgetContainer` for consistent styling
 - Match the design system (bg-gray-900, border-gray-800, rounded-lg)
 - Be added to the grid in `app/page.tsx`
 
+#### Widget-Specific Features
+
+**Clock Widget**:
+- Second-by-second updates using `setInterval`
+- Timezone conversion via `date-fns-tz`
+- Configurable date format (7 preset options)
+
+**Weather Widget**:
+- 12 distinct weather code mappings with icons
+- Animated icons using CSS keyframes (`rotate`, `sway`, `fade`, `bounce`, `float`, `flash`, `pulse`)
+- Temperature, humidity, wind speed display
+- Weather descriptions from Open-Meteo API
+
+**Calendar Widget**:
+- All-day event detection and special formatting
+- Multi-day event duration display
+- Location display with MapPin icon
+- Events sorted by start time
+- Filters events within 30 days
+
+**RSS Widget**:
+- Automatic carousel (10-second rotation)
+- Visual indicators (dots) for current item
+- Configurable display limit (default: 7 items)
+- Date-sorted feed aggregation
+- Server-side feed item limit (10 items per feed, 20 total)
+
 ## Security Considerations
-- **SSRF Protection**: Never fetch external URLs without validation
+- **SSRF Protection**: Never fetch external URLs without validation via `validateCalendarUrl()`
 - **Input Validation**: All API routes validate parameters before processing
+  - Coordinate ranges: latitude (-90 to 90), longitude (-180 to 180)
+  - Query string length limits (max 100 characters for geocoding)
+  - Timezone validation using `Intl.supportedValuesOf('timeZone')`
+  - Date format whitelist (7 predefined formats)
 - **Response Size Limits**: Prevent memory exhaustion from large responses
-- **Timeout Protection**: Prevent hanging requests
+  - Default: 10MB maximum response size
+  - Chunk-by-chunk validation during fetch
+  - Per-API limits defined in `constants.ts`
+- **Timeout Protection**: Prevent hanging requests (10-second default timeout)
+- **IPv4 Enforcement**: Prevents IPv6 timeout issues in WSL environments
+- **Redirect Limits**: Maximum 5 redirects to prevent redirect loops
 - **No Sensitive Data**: Application uses server-side config.json file only (no secrets, no database)
+- **Port Restrictions**: Blocks access to privileged ports (1-1023) and dangerous service ports
+- **Private Network Protection**: Blocks access to localhost, private IP ranges, and cloud metadata services
+
+## API Endpoints
+
+### Configuration Management
+- `GET /api/config` - Retrieve current configuration (merged from `config.json` and defaults)
+- `POST /api/config` - Save configuration to `config.json` (validates and merges with defaults)
+
+### Weather & Location
+- `GET /api/weather?lat={lat}&lon={lon}` - Fetch weather data from Open-Meteo
+- `GET /api/geocoding?city={city}` - Forward geocoding: city name → coordinates and timezone
+- `GET /api/reverse-geocoding?lat={lat}&lon={lon}` - Reverse geocoding: coordinates → city name
+
+### Calendar & RSS
+- `GET /api/calendar?url={calendarUrl}` - Fetch and parse Google Calendar iCal feed
+- `GET /api/rss?urls[]={url1}&urls[]={url2}` - Aggregate multiple RSS feeds (max 10 items per feed, 20 total)
+
+All external URL parameters MUST be validated with `validateCalendarUrl()` before fetching.
+
+## Best Practices
+
+### File Size Management
+- Target: Keep all source files under 400 lines
+- Hard limit: 700 lines maximum per file
+- Current status: `LocationSettings.tsx` is at 556 lines (approaching limit)
+- When approaching limits: Extract sub-components or utility functions
+
+### Error Handling
+- Use `ErrorBoundary` for React component errors
+- Show user-friendly error messages via `Toast` component
+- Log errors to console for debugging
+- Provide retry mechanisms where appropriate
+
+### Performance Optimization
+- Use auto-refresh intervals wisely (weather: 30min, calendar/RSS: 15min)
+- Limit API response sizes to prevent memory issues
+- Implement client-side caching where appropriate
+- Use loading states to improve perceived performance
+
+### Code Organization
+- Group related functionality in directories (`app/settings/components/`)
+- Use custom hooks for reusable logic (`lib/hooks/`)
+- Centralize constants in `lib/constants.ts`
+- Keep API logic in route handlers, UI logic in components

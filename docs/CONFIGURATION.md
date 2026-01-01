@@ -2,11 +2,27 @@
 
 ## Auto-Detection
 
-On first visit, the application automatically detects and applies:
+On first visit, the application automatically detects and applies location using multiple methods in parallel:
 
-- **Timezone**: Browser's timezone (via `Intl.DateTimeFormat().resolvedOptions().timeZone`)
-- **City**: Extracted from timezone string (e.g., "America/New_York" → "New York")
-- **Coordinates**: Browser geolocation API (requires user permission)
+**Multi-Layer Detection Strategy**:
+1. **Parallel Execution**: GPS geolocation + IP-based detection run simultaneously
+2. **Priority System**: GPS → IP → Geocoding → Defaults
+3. **Reverse Geocoding**: GPS coordinates are converted to city name via Nominatim API
+4. **Forward Geocoding**: City names are converted to timezone via Open-Meteo API
+5. **Auto-Save**: Detected settings are automatically saved to `config.json`
+
+**Detection Sources**:
+- **Timezone**:
+  - Browser's timezone via `Intl.DateTimeFormat().resolvedOptions().timeZone`
+  - Or from geocoding API based on coordinates
+- **City**:
+  - Reverse geocoding from GPS coordinates (e.g., "New York, USA")
+  - Or IP-based detection via ipapi.co service
+  - Or extracted from timezone string (e.g., "America/New_York" → "New York")
+- **Coordinates**:
+  - Browser geolocation API (GPS - requires user permission)
+  - Or IP-based detection via ipapi.co service
+  - Or forward geocoding from city name
 
 This happens only on the first visit before any manual configuration is saved.
 

@@ -62,10 +62,14 @@ Only removes the systemd service. App files and system packages are retained.
 
 ### Auto-Detection (First Time)
 
-On first visit, the application automatically detects:
-- **Timezone**: From browser settings (e.g., America/New_York)
-- **City**: Extracted from timezone (e.g., New York)
-- **Coordinates**: Via browser geolocation (with permission)
+On first visit, the application automatically detects using multiple methods:
+- **Location Detection**: Parallel execution of GPS geolocation and IP-based detection
+  - Priority: GPS → IP → Geocoding → defaults
+  - GPS coordinates are reverse-geocoded to get city name
+  - City names are forward-geocoded to get timezone
+- **Timezone**: From browser settings or geocoding results (e.g., America/New_York)
+- **City**: From reverse geocoding (GPS) or IP detection (e.g., New York)
+- **Coordinates**: Via browser geolocation (GPS with permission) or IP-based detection
 
 ### Method 1: Web UI (Recommended)
 
@@ -161,38 +165,51 @@ http://localhost:3000
 ## Technology Stack
 
 - Node.js 22, Next.js 16, React 19, TypeScript 5
-- Tailwind CSS, date-fns, ical.js, rss-parser
+- Tailwind CSS, lucide-react, date-fns, ical.js, rss-parser
 - Weather API: Open-Meteo (free)
+- Geocoding APIs: Open-Meteo, Nominatim/OpenStreetMap
 
 ## Project Structure
 
 ```
 app/
-├── api/              # API Routes
-│   ├── calendar/
-│   ├── rss/
-│   └── weather/
-├── settings/         # Settings page
-└── page.tsx          # Main page
+├── api/                   # API Routes
+│   ├── calendar/          # Google Calendar integration
+│   ├── config/            # Configuration management
+│   ├── geocoding/         # City → coordinates conversion
+│   ├── reverse-geocoding/ # Coordinates → city conversion
+│   ├── rss/               # RSS feed aggregation
+│   └── weather/           # Weather data
+├── settings/              # Settings page
+│   └── components/        # Settings sub-components
+└── page.tsx               # Main dashboard
 
-components/           # Widgets
+components/                # Widgets
 ├── Calendar/
 ├── Clock/
 ├── RSS/
-└── Weather/
+├── Weather/
+└── shared/                # Shared UI components
+    ├── WidgetContainer.tsx
+    ├── ErrorBoundary.tsx
+    └── Toast.tsx
 
 lib/
-├── config.ts         # Configuration types and defaults
-├── constants.ts      # System constants
-├── storage.ts        # localStorage management
-└── urlValidation.ts  # SSRF protection
+├── config.ts              # Configuration types and defaults
+├── constants.ts           # System constants
+├── storage.ts             # Configuration management
+├── urlValidation.ts       # SSRF protection
+└── hooks/                 # Custom React hooks
+    ├── useWidgetData.ts
+    ├── useAutoRefresh.ts
+    └── useConfigWithRetry.ts
 
 scripts/
-├── install.sh        # Installation and service registration
-├── uninstall.sh      # Service removal
-├── update.sh         # Update code and rebuild (no restart)
-├── start-kiosk.sh    # Kiosk launcher
-└── config.sh         # Configuration file management
+├── install.sh             # Installation and service registration
+├── uninstall.sh           # Service removal
+├── update.sh              # Update code and rebuild (no restart)
+├── start-kiosk.sh         # Kiosk launcher
+└── config.sh              # Configuration file management
 ```
 
 ## Troubleshooting

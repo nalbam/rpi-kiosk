@@ -20,34 +20,52 @@ http://localhost:3000
 
 ```
 app/
-├── api/              # API Routes
-│   ├── calendar/
-│   ├── config/       # Configuration file (config.json) management
-│   ├── rss/
-│   └── weather/
-├── settings/
+├── api/                      # API Routes
+│   ├── calendar/route.ts     # Google Calendar iCal fetching
+│   ├── config/route.ts       # Configuration file (config.json) management
+│   ├── geocoding/route.ts    # Open-Meteo geocoding (city → coordinates)
+│   ├── reverse-geocoding/route.ts  # Nominatim reverse geocoding (coordinates → city)
+│   ├── rss/route.ts          # RSS feed aggregation
+│   └── weather/route.ts      # Open-Meteo API integration
+├── settings/                 # Settings page
+│   ├── page.tsx              # Main settings page
+│   └── components/           # Settings sub-components
+│       ├── LocationSettings.tsx
+│       ├── CalendarSettings.tsx
+│       └── RSSSettings.tsx
 ├── layout.tsx
 ├── page.tsx
-└── globals.css
+└── globals.css               # Tailwind CSS and custom animations
 
 components/
-├── Calendar/
-├── Clock/
-├── RSS/
-└── Weather/
+├── Calendar/Calendar.tsx     # Calendar events display
+├── Clock/Clock.tsx           # Time display with timezone support
+├── RSS/RSS.tsx               # RSS news feed with automatic carousel
+├── Weather/Weather.tsx       # Weather widget with animated icons
+└── shared/                   # Shared UI components
+    ├── WidgetContainer.tsx   # Unified widget wrapper
+    ├── ErrorBoundary.tsx     # Error isolation boundary
+    └── Toast.tsx             # Notification system
 
 lib/
-├── config.ts         # Configuration types and defaults
-├── constants.ts      # System constants (API limits, validation ranges)
-├── storage.ts        # Configuration management and browser detection
-└── urlValidation.ts  # SSRF protection
+├── config.ts                 # Configuration types and defaults
+├── constants.ts              # System constants (API limits, validation ranges)
+├── storage.ts                # Configuration management and browser detection
+├── urlValidation.ts          # SSRF protection utilities
+├── validation.ts             # Input validation (coordinates, etc.)
+├── apiHelpers.ts             # API response creation helpers
+├── configHelpers.ts          # Server-side config loading and merging
+└── hooks/                    # Custom React hooks
+    ├── useWidgetData.ts      # Generic data fetching with auto-refresh
+    ├── useAutoRefresh.ts     # Interval-based refresh logic
+    └── useConfigWithRetry.ts # Configuration loading with retry
 
 scripts/
-├── config.sh         # Configuration file (config.json) CLI management
-├── install.sh        # Automated installation for Raspberry Pi
-├── start-kiosk.sh    # Launch kiosk mode
-├── uninstall.sh      # Service removal
-└── update.sh         # Update code and rebuild (no restart)
+├── config.sh                 # Configuration file (config.json) CLI management
+├── install.sh                # Automated installation for Raspberry Pi
+├── start-kiosk.sh            # Launch kiosk mode
+├── uninstall.sh              # Service removal
+└── update.sh                 # Update code and rebuild (no restart)
 ```
 
 ## Scripts
@@ -116,6 +134,41 @@ All API routes fetching external URLs must:
 - [ ] Set appropriate timeout and size limits
 
 ### Component Pattern
+
+#### Modern Pattern (Recommended - Using Custom Hooks)
+
+```typescript
+'use client';
+
+import { useWidgetData } from '@/lib/hooks/useWidgetData';
+import { WidgetContainer } from '@/components/shared/WidgetContainer';
+import ErrorBoundary from '@/components/shared/ErrorBoundary';
+
+interface MyData {
+  value: string;
+}
+
+export default function MyWidget() {
+  const { data, loading, error } = useWidgetData<MyData>(
+    '/api/my-endpoint',
+    30 // refresh interval in minutes
+  );
+
+  if (loading) return <WidgetContainer loading />;
+  if (error) return <WidgetContainer error={error} />;
+  if (!data) return <WidgetContainer empty />;
+
+  return (
+    <ErrorBoundary>
+      <WidgetContainer>
+        <div>{data.value}</div>
+      </WidgetContainer>
+    </ErrorBoundary>
+  );
+}
+```
+
+#### Traditional Pattern (Manual Implementation)
 
 ```typescript
 'use client';
