@@ -37,3 +37,13 @@ next-env.d.ts
 
 # config
 config.json
+
+# Backup
+*.bak
+*.backup
+
+# Prompt
+.prompt-*.md
+.prompt.md
+prompt-*.md
+prompt.md
