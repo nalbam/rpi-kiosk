@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchWithTimeout } from '@/lib/urlValidation';
+import { API, COORDINATES } from '@/lib/constants';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -24,16 +25,16 @@ export async function GET(request: Request) {
     );
   }
 
-  if (latNum < -90 || latNum > 90) {
+  if (latNum < COORDINATES.MIN_LATITUDE || latNum > COORDINATES.MAX_LATITUDE) {
     return NextResponse.json(
-      { error: 'Latitude must be between -90 and 90' },
+      { error: `Latitude must be between ${COORDINATES.MIN_LATITUDE} and ${COORDINATES.MAX_LATITUDE}` },
       { status: 400 }
     );
   }
 
-  if (lonNum < -180 || lonNum > 180) {
+  if (lonNum < COORDINATES.MIN_LONGITUDE || lonNum > COORDINATES.MAX_LONGITUDE) {
     return NextResponse.json(
-      { error: 'Longitude must be between -180 and 180' },
+      { error: `Longitude must be between ${COORDINATES.MIN_LONGITUDE} and ${COORDINATES.MAX_LONGITUDE}` },
       { status: 400 }
     );
   }
@@ -42,8 +43,8 @@ export async function GET(request: Request) {
     // Using Open-Meteo API (free, no API key required)
     const response = await fetchWithTimeout(
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`,
-      10000, // 10 second timeout
-      1024 * 1024 // 1MB max size
+      API.TIMEOUT_MS,
+      API.MAX_WEATHER_SIZE
     );
 
     if (!response.ok) {

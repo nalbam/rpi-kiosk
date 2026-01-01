@@ -17,9 +17,13 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     if (config) {
-      saveConfig(config);
-      alert('설정이 저장되었습니다');
-      router.push('/');
+      const result = saveConfig(config);
+      if (result.success) {
+        alert('설정이 저장되었습니다');
+        router.push('/');
+      } else {
+        alert(`설정 저장 실패: ${result.error}`);
+      }
     }
   };
 
@@ -130,13 +134,21 @@ export default function SettingsPage() {
                   <input
                     type="number"
                     step="0.0001"
+                    min="-90"
+                    max="90"
                     value={config.weatherLocation.lat}
-                    onChange={(e) => setConfig({
-                      ...config,
-                      weatherLocation: { ...config.weatherLocation, lat: parseFloat(e.target.value) }
-                    })}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value);
+                      if (!isNaN(value) && value >= -90 && value <= 90) {
+                        setConfig({
+                          ...config,
+                          weatherLocation: { ...config.weatherLocation, lat: value }
+                        });
+                      }
+                    }}
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                   />
+                  <p className="text-xs text-gray-500 mt-1">-90 ~ 90</p>
                 </div>
 
                 <div>
@@ -144,13 +156,21 @@ export default function SettingsPage() {
                   <input
                     type="number"
                     step="0.0001"
+                    min="-180"
+                    max="180"
                     value={config.weatherLocation.lon}
-                    onChange={(e) => setConfig({
-                      ...config,
-                      weatherLocation: { ...config.weatherLocation, lon: parseFloat(e.target.value) }
-                    })}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value);
+                      if (!isNaN(value) && value >= -180 && value <= 180) {
+                        setConfig({
+                          ...config,
+                          weatherLocation: { ...config.weatherLocation, lon: value }
+                        });
+                      }
+                    }}
                     className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                   />
+                  <p className="text-xs text-gray-500 mt-1">-180 ~ 180</p>
                 </div>
               </div>
 
@@ -160,10 +180,15 @@ export default function SettingsPage() {
                   type="number"
                   min="1"
                   value={config.refreshIntervals.weather}
-                  onChange={(e) => setConfig({
-                    ...config,
-                    refreshIntervals: { ...config.refreshIntervals, weather: parseInt(e.target.value) }
-                  })}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value >= 1) {
+                      setConfig({
+                        ...config,
+                        refreshIntervals: { ...config.refreshIntervals, weather: value }
+                      });
+                    }
+                  }}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -195,10 +220,15 @@ export default function SettingsPage() {
                   type="number"
                   min="1"
                   value={config.refreshIntervals.calendar}
-                  onChange={(e) => setConfig({
-                    ...config,
-                    refreshIntervals: { ...config.refreshIntervals, calendar: parseInt(e.target.value) }
-                  })}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value >= 1) {
+                      setConfig({
+                        ...config,
+                        refreshIntervals: { ...config.refreshIntervals, calendar: value }
+                      });
+                    }
+                  }}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -256,10 +286,15 @@ export default function SettingsPage() {
                   type="number"
                   min="1"
                   value={config.refreshIntervals.rss}
-                  onChange={(e) => setConfig({
-                    ...config,
-                    refreshIntervals: { ...config.refreshIntervals, rss: parseInt(e.target.value) }
-                  })}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value >= 1) {
+                      setConfig({
+                        ...config,
+                        refreshIntervals: { ...config.refreshIntervals, rss: value }
+                      });
+                    }
+                  }}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                 />
               </div>

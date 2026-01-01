@@ -14,23 +14,28 @@ interface WeatherData {
 export default function Weather() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [city, setCity] = useState('');
 
   const fetchWeather = async () => {
     try {
       const config = getConfig();
       setCity(config.weatherLocation.city);
-      
+
       const response = await fetch(
         `/api/weather?lat=${config.weatherLocation.lat}&lon=${config.weatherLocation.lon}`
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         setWeather(data);
+        setError(false);
+      } else {
+        setError(true);
       }
     } catch (error) {
       console.error('Failed to fetch weather:', error);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -48,7 +53,17 @@ export default function Weather() {
   if (loading) {
     return (
       <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+        <h2 className="text-2xl font-semibold mb-4">날씨</h2>
         <div className="text-gray-400">날씨 정보 로딩 중...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+        <h2 className="text-2xl font-semibold mb-4">날씨</h2>
+        <div className="text-gray-400">날씨 정보를 가져올 수 없습니다</div>
       </div>
     );
   }
@@ -56,6 +71,7 @@ export default function Weather() {
   if (!weather) {
     return (
       <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+        <h2 className="text-2xl font-semibold mb-4">날씨</h2>
         <div className="text-gray-400">날씨 정보를 가져올 수 없습니다</div>
       </div>
     );

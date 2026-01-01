@@ -45,7 +45,8 @@ rpi-kiosk/
 │   └── Weather/            # Weather widget
 ├── lib/                    # Utility Libraries
 │   ├── config.ts          # Configuration types and defaults
-│   └── storage.ts         # LocalStorage management
+│   ├── storage.ts         # LocalStorage management
+│   └── urlValidation.ts   # SSRF protection utilities
 ├── scripts/               # Installation & Deployment Scripts
 │   ├── install.sh        # Installation script for RPI
 │   ├── start-kiosk.sh    # Kiosk mode startup script
@@ -115,6 +116,83 @@ export async function GET(request: Request) {
   }
 }
 ```
+
+### Security: SSRF Protection
+
+All API routes that fetch external URLs **MUST** use security utilities from `@/lib/urlValidation`:
+
+#### Required Functions
+
+**`validateCalendarUrl(url: string)`**
+- Validates URLs to prevent Server-Side Request Forgery (SSRF) attacks
+- Blocks non-HTTP(S) protocols
+- Blocks localhost, loopback, and private IP ranges
+- Blocks cloud metadata services (169.254.169.254, etc.)
+- Blocks privileged and dangerous ports
+- Returns: `{ valid: boolean, error?: string }`
+
+**`fetchWithTimeout(url: string, timeoutMs?: number, maxSize?: number, redirectCount?: number)`**
+- Fetches URLs with timeout and size limit protection
+- Default timeout: 10 seconds
+- Default max size: 10MB
+- Follows up to 5 redirects
+- Returns: Promise<Response>
+
+#### Example Usage
+
+```typescript
+import { validateCalendarUrl, fetchWithTimeout } from '@/lib/urlValidation';
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userUrl = searchParams.get('url');
+
+  if (!userUrl) {
+    return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
+  }
+
+  // Step 1: Validate the URL
+  const validation = validateCalendarUrl(userUrl);
+  if (!validation.valid) {
+    return NextResponse.json(
+      { error: validation.error },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Step 2: Fetch with timeout and size limits
+    const response = await fetchWithTimeout(
+      userUrl,
+      10000,  // 10 second timeout
+      5 * 1024 * 1024  // 5MB max size
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch data');
+    }
+
+    const data = await response.text();
+    return NextResponse.json({ data });
+  } catch (error) {
+    console.error('Fetch error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch external data' },
+      { status: 500 }
+    );
+  }
+}
+```
+
+#### Security Checklist for New API Routes
+
+- [ ] Import `validateCalendarUrl` and `fetchWithTimeout`
+- [ ] Validate ALL user-provided URLs before fetching
+- [ ] Use `fetchWithTimeout()` instead of native `fetch()`
+- [ ] Handle validation errors with 400 status
+- [ ] Set appropriate timeout values
+- [ ] Set appropriate size limits
+- [ ] Test with malicious URLs (localhost, private IPs, etc.)
 
 ### Component Guidelines
 

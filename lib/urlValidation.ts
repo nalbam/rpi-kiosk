@@ -1,5 +1,6 @@
 import { URL } from 'url';
 import { isIP } from 'net';
+import { API } from './constants';
 
 /**
  * Validates a URL to prevent SSRF attacks
@@ -145,13 +146,13 @@ function isAllowedIP(ip: string, version: number): boolean {
  */
 export async function fetchWithTimeout(
   url: string,
-  timeoutMs: number = 10000,
-  maxSize: number = 10 * 1024 * 1024, // 10MB default
+  timeoutMs: number = API.TIMEOUT_MS,
+  maxSize: number = API.MAX_RESPONSE_SIZE,
   redirectCount: number = 0
 ): Promise<Response> {
   return new Promise((resolve, reject) => {
-    // Prevent infinite redirect loops (max 5 redirects)
-    if (redirectCount > 5) {
+    // Prevent infinite redirect loops
+    if (redirectCount > API.MAX_REDIRECTS) {
       reject(new Error('Too many redirects'));
       return;
     }

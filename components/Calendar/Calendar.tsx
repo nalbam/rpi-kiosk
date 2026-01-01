@@ -20,8 +20,24 @@ export default function Calendar() {
   const fetchCalendar = async () => {
     try {
       const config = getConfig();
-      
+
       if (!config.calendarUrl) {
+        setLoading(false);
+        return;
+      }
+
+      // Basic client-side URL validation
+      try {
+        const url = new URL(config.calendarUrl);
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          console.error('Invalid URL protocol:', url.protocol);
+          setError(true);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        console.error('Invalid URL format:', config.calendarUrl);
+        setError(true);
         setLoading(false);
         return;
       }
@@ -29,7 +45,7 @@ export default function Calendar() {
       const response = await fetch(
         `/api/calendar?url=${encodeURIComponent(config.calendarUrl)}`
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         setEvents(data.events);

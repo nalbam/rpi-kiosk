@@ -15,12 +15,13 @@ interface RSSItem {
 export default function RSS() {
   const [items, setItems] = useState<RSSItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const fetchRSS = async () => {
     try {
       const config = getConfig();
-      
+
       if (config.rssFeeds.length === 0) {
         setLoading(false);
         return;
@@ -29,13 +30,17 @@ export default function RSS() {
       const response = await fetch(
         `/api/rss?urls=${encodeURIComponent(config.rssFeeds.join(','))}`
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         setItems(data.items);
+        setError(false);
+      } else {
+        setError(true);
       }
     } catch (error) {
       console.error('Failed to fetch RSS:', error);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -70,12 +75,21 @@ export default function RSS() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+        <h2 className="text-2xl font-semibold mb-4">뉴스</h2>
+        <div className="text-gray-400">뉴스를 가져올 수 없습니다</div>
+      </div>
+    );
+  }
+
   if (items.length === 0) {
     return (
       <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
         <h2 className="text-2xl font-semibold mb-4">뉴스</h2>
         <div className="text-gray-400">
-          뉴스를 가져올 수 없습니다
+          {getConfig().rssFeeds.length === 0 ? '설정에서 RSS 피드를 추가하세요' : '뉴스 아이템이 없습니다'}
         </div>
       </div>
     );
@@ -89,8 +103,8 @@ export default function RSS() {
     <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
       <h2 className="text-2xl font-semibold mb-4">뉴스</h2>
       <div className="space-y-4">
-        {displayItems.map((item, index) => (
-          <div key={`${currentIndex}-${index}`} className="border-b border-gray-700 pb-3 last:border-b-0">
+        {displayItems.map((item) => (
+          <div key={item.link} className="border-b border-gray-700 pb-3 last:border-b-0">
             <a
               href={item.link}
               target="_blank"

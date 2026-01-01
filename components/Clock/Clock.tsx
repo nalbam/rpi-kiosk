@@ -27,7 +27,16 @@ export default function Clock() {
   }, []);
 
   if (!time) {
-    return null;
+    return (
+      <div className="text-center">
+        <div className="text-8xl font-bold mb-2 text-gray-600">
+          --:--:--
+        </div>
+        <div className="text-3xl text-gray-500">
+          로딩 중...
+        </div>
+      </div>
+    );
   }
 
   const zonedTime = utcToZonedTime(time, timezone);
