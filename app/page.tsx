@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { initializeConfig } from '@/lib/storage';
 import { Settings, CheckCircle, X } from 'lucide-react';
@@ -9,15 +9,11 @@ import Weather from '@/components/Weather/Weather';
 import Calendar from '@/components/Calendar/Calendar';
 import RSS from '@/components/RSS/RSS';
 
-export default function Home() {
+// Toast handler component that uses useSearchParams
+function ToastHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [toast, setToast] = useState<{ message: string; type: 'success' } | null>(null);
-
-  // Initialize config on first visit (auto-detect browser settings)
-  useEffect(() => {
-    initializeConfig();
-  }, []);
 
   // Handle toast messages from URL parameters
   useEffect(() => {
@@ -45,23 +41,38 @@ export default function Home() {
     }
   }, [toast]);
 
+  if (!toast) return null;
+
+  return (
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
+      <div className="flex items-center gap-3 px-6 py-3 rounded-lg shadow-lg border bg-green-600 border-green-500">
+        <CheckCircle className="w-5 h-5 flex-shrink-0" />
+        <span className="font-medium">{toast.message}</span>
+        <button
+          onClick={() => setToast(null)}
+          className="ml-2 hover:bg-white/20 rounded p-1 transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  const router = useRouter();
+
+  // Initialize config on first visit (auto-detect browser settings)
+  useEffect(() => {
+    initializeConfig();
+  }, []);
+
   return (
     <main className="container-fullscreen bg-black text-white">
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-center gap-3 px-6 py-3 rounded-lg shadow-lg border bg-green-600 border-green-500">
-            <CheckCircle className="w-5 h-5 flex-shrink-0" />
-            <span className="font-medium">{toast.message}</span>
-            <button
-              onClick={() => setToast(null)}
-              className="ml-2 hover:bg-white/20 rounded p-1 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Toast Notification - Wrapped in Suspense */}
+      <Suspense fallback={null}>
+        <ToastHandler />
+      </Suspense>
 
       <div className="flex flex-col h-full p-vw-sm">
         {/* Header with Settings Button */}
