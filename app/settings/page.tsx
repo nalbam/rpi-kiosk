@@ -384,7 +384,7 @@ export default function SettingsPage() {
         <div className="space-y-6 min-w-0">
           {/* Location & Time Settings */}
           <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">
-            <h2 className="text-2xl font-semibold mb-4">Location & Time Settings</h2>
+            <h2 className="text-2xl font-semibold mb-2">Location & Time Settings</h2>
             <p className="text-sm text-gray-400 mb-6">
               Search for your city to automatically set location, coordinates, and timezone
             </p>
@@ -581,9 +581,9 @@ export default function SettingsPage() {
 
               <hr className="border-gray-700" />
 
-              {/* Advanced Time Settings */}
+              {/* Advanced Settings */}
               <div>
-                <h3 className="text-lg font-medium mb-4">Advanced Settings</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-300">Advanced Settings</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">Date Format</label>
@@ -598,9 +598,7 @@ export default function SettingsPage() {
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Date display format
-                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Date display format</p>
                   </div>
 
                   <div>
@@ -620,23 +618,19 @@ export default function SettingsPage() {
                       }}
                       className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Minutes between weather updates
-                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Minutes between updates</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Time Server (Optional)</label>
+                    <label className="block text-sm font-medium mb-2">Time Server</label>
                     <input
                       type="text"
                       value={config.timeServer || ''}
                       onChange={(e) => setConfig({ ...config, timeServer: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                      placeholder="time.google.com"
+                      placeholder="time.google.com (optional)"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Custom NTP server
-                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Custom NTP server (optional)</p>
                   </div>
                 </div>
               </div>
@@ -646,9 +640,9 @@ export default function SettingsPage() {
 
           {/* Calendar Settings */}
           <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">
-            <h2 className="text-2xl font-semibold mb-4">Calendar Settings</h2>
+            <h2 className="text-2xl font-semibold mb-6">Calendar Settings</h2>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium mb-2">Google Calendar URL</label>
                 <input
@@ -663,53 +657,56 @@ export default function SettingsPage() {
                 </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Refresh Interval (minutes)</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={config.refreshIntervals.calendar}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value >= 1) {
-                      setConfig({
-                        ...config,
-                        refreshIntervals: { ...config.refreshIntervals, calendar: value }
-                      });
-                    }
-                  }}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Refresh Interval</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={config.refreshIntervals.calendar}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value >= 1) {
+                        setConfig({
+                          ...config,
+                          refreshIntervals: { ...config.refreshIntervals, calendar: value }
+                        });
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Minutes between updates</p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Number of Events to Display</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={config.displayLimits.calendarEvents}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value >= 1 && value <= 10) {
-                      setConfig({
-                        ...config,
-                        displayLimits: { ...config.displayLimits, calendarEvents: value }
-                      });
-                    }
-                  }}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">1 to 10</p>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Events to Display</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={config.displayLimits.calendarEvents}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value >= 1 && value <= 10) {
+                        setConfig({
+                          ...config,
+                          displayLimits: { ...config.displayLimits, calendarEvents: value }
+                        });
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">1 to 10 events</p>
+                </div>
               </div>
             </div>
           </div>
 
           {/* RSS Settings */}
           <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">
-            <h2 className="text-2xl font-semibold mb-4">RSS Feed Settings</h2>
+            <h2 className="text-2xl font-semibold mb-6">RSS Feed Settings</h2>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium mb-2">Add RSS Feed</label>
                 <div className="flex gap-2">
@@ -723,7 +720,7 @@ export default function SettingsPage() {
                   />
                   <button
                     onClick={handleAddRSS}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors whitespace-nowrap"
                   >
                     Add
                   </button>
@@ -738,7 +735,7 @@ export default function SettingsPage() {
                       <span className="text-sm truncate flex-1">{feed}</span>
                       <button
                         onClick={() => handleRemoveRSS(index)}
-                        className="ml-4 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm transition-colors"
+                        className="ml-4 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-sm transition-colors whitespace-nowrap"
                       >
                         Remove
                       </button>
@@ -750,44 +747,47 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Refresh Interval (minutes)</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={config.refreshIntervals.rss}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value >= 1) {
-                      setConfig({
-                        ...config,
-                        refreshIntervals: { ...config.refreshIntervals, rss: value }
-                      });
-                    }
-                  }}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Refresh Interval</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={config.refreshIntervals.rss}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value >= 1) {
+                        setConfig({
+                          ...config,
+                          refreshIntervals: { ...config.refreshIntervals, rss: value }
+                        });
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Minutes between updates</p>
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Number of News Items to Display</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={config.displayLimits.rssItems}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value >= 1 && value <= 10) {
-                      setConfig({
-                        ...config,
-                        displayLimits: { ...config.displayLimits, rssItems: value }
-                      });
-                    }
-                  }}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">1 to 10</p>
+                <div>
+                  <label className="block text-sm font-medium mb-2">News Items to Display</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="10"
+                    value={config.displayLimits.rssItems}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      if (!isNaN(value) && value >= 1 && value <= 10) {
+                        setConfig({
+                          ...config,
+                          displayLimits: { ...config.displayLimits, rssItems: value }
+                        });
+                      }
+                    }}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">1 to 10 items</p>
+                </div>
               </div>
             </div>
           </div>
