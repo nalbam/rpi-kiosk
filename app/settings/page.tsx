@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getConfig, saveConfig, resetConfig } from '@/lib/storage';
+import { getConfig, saveConfig, resetConfig, reloadConfigFromFile } from '@/lib/storage';
 import { KioskConfig } from '@/lib/config';
 
 export default function SettingsPage() {
@@ -10,9 +10,24 @@ export default function SettingsPage() {
   const [config, setConfig] = useState<KioskConfig | null>(null);
   const [rssInput, setRssInput] = useState('');
 
+  // Load configuration
   useEffect(() => {
     const currentConfig = getConfig();
     setConfig(currentConfig);
+  }, []);
+
+  // Enable scrolling on settings page (disable kiosk mode overflow:hidden)
+  useEffect(() => {
+    // Save original overflow style
+    const originalOverflow = document.body.style.overflow;
+
+    // Enable scrolling on settings page
+    document.body.style.overflow = 'auto';
+
+    // Restore original overflow when leaving settings page
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
   }, []);
 
   const handleSave = () => {
@@ -33,6 +48,19 @@ export default function SettingsPage() {
       const defaultConfig = getConfig();
       setConfig(defaultConfig);
       alert('설정이 초기화되었습니다');
+    }
+  };
+
+  const handleReloadFromFile = async () => {
+    if (confirm('서버의 config.json 파일에서 설정을 다시 불러오시겠습니까?\n현재 변경사항은 덮어씌워집니다.')) {
+      const result = await reloadConfigFromFile();
+      if (result.success) {
+        const reloadedConfig = getConfig();
+        setConfig(reloadedConfig);
+        alert('서버 설정을 다시 불러왔습니다');
+      } else {
+        alert(`설정 불러오기 실패: ${result.error}`);
+      }
     }
   };
 
@@ -345,19 +373,33 @@ export default function SettingsPage() {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-8 flex gap-4">
-          <button
-            onClick={handleSave}
-            className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition-colors"
-          >
-            저장
-          </button>
-          <button
-            onClick={handleReset}
-            className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-lg font-semibold transition-colors"
-          >
-            초기화
-          </button>
+        <div className="mt-8 space-y-4">
+          <div className="flex gap-4">
+            <button
+              onClick={handleSave}
+              className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg text-lg font-semibold transition-colors"
+            >
+              저장
+            </button>
+            <button
+              onClick={handleReset}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-lg font-semibold transition-colors"
+            >
+              초기화
+            </button>
+          </div>
+
+          <div className="border-t border-gray-700 pt-4">
+            <button
+              onClick={handleReloadFromFile}
+              className="w-full px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm transition-colors"
+            >
+              📄 서버 설정 파일(config.json)에서 다시 불러오기
+            </button>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              서버에서 config.json 파일을 수정한 경우 이 버튼으로 다시 불러올 수 있습니다
+            </p>
+          </div>
         </div>
       </div>
     </div>

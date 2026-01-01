@@ -15,7 +15,25 @@ export function getConfig(): KioskConfig {
   try {
     const stored = localStorage.getItem(CONFIG_KEY);
     if (stored) {
-      return { ...defaultConfig, ...JSON.parse(stored) };
+      const parsedConfig = JSON.parse(stored) as Partial<KioskConfig>;
+
+      // Deep merge nested objects to preserve all fields
+      return {
+        ...defaultConfig,
+        ...parsedConfig,
+        weatherLocation: {
+          ...defaultConfig.weatherLocation,
+          ...parsedConfig.weatherLocation,
+        },
+        refreshIntervals: {
+          ...defaultConfig.refreshIntervals,
+          ...parsedConfig.refreshIntervals,
+        },
+        displayLimits: {
+          ...defaultConfig.displayLimits,
+          ...parsedConfig.displayLimits,
+        },
+      };
     }
   } catch (error) {
     console.error('Failed to load config:', error);
@@ -86,10 +104,42 @@ export function resetConfig(): void {
   if (typeof window === 'undefined') {
     return;
   }
-  
+
   try {
+    // Remove both config and initialized flag to allow re-initialization from config.json
     localStorage.removeItem(CONFIG_KEY);
+    localStorage.removeItem(CONFIG_INITIALIZED_KEY);
   } catch (error) {
     console.error('Failed to reset config:', error);
+  }
+}
+
+/**
+ * Force reload configuration from config.json file
+ * This will discard current localStorage config and reload from server
+ */
+export async function reloadConfigFromFile(): Promise<{ success: boolean; error?: string }> {
+  if (typeof window === 'undefined') {
+    return { success: false, error: 'Window object not available' };
+  }
+
+  try {
+    // Fetch config from server
+    const response = await fetch('/api/config');
+    if (!response.ok) {
+      return { success: false, error: 'Failed to fetch config from server' };
+    }
+
+    const fileConfig = await response.json();
+
+    // Save to localStorage
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(fileConfig));
+    localStorage.setItem(CONFIG_INITIALIZED_KEY, 'true');
+
+    console.log('Configuration reloaded from config.json');
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to reload config from file:', error);
+    return { success: false, error: 'Failed to reload configuration from server' };
   }
 }
