@@ -1,38 +1,39 @@
 # Configuration
 
-## 설정 방법
+## Configuration Methods
 
-### 1. 웹 UI (권장)
-브라우저에서 설정 버튼 클릭
+### 1. Web UI (Recommended)
+Click the Settings button in the browser
 
-### 2. 쉘 스크립트 (config.json)
+### 2. Shell Script (config.json)
 
 ```bash
-# jq 설치 (필수)
+# Install jq (required)
 sudo apt-get install jq
 
-# 설정 파일 초기화
+# Initialize configuration file
 ./scripts/config.sh init
 
-# 값 설정
+# Set values
 ./scripts/config.sh set timezone "Asia/Seoul"
 ./scripts/config.sh set weatherLocation.lat 37.5665
 ./scripts/config.sh set weatherLocation.city "Seoul"
 
-# 값 확인
+# Get value
 ./scripts/config.sh get timezone
 
-# 전체 설정
+# View all settings
 ./scripts/config.sh list
 ```
 
-**우선순위**: localStorage > config.json > 기본값
+**Priority**: localStorage > config.json > defaults
 
-## 기본 설정
+## Default Configuration
 
 ```json
 {
   "timezone": "Asia/Seoul",
+  "dateFormat": "EEEE, MMMM dd, yyyy",
   "weatherLocation": {
     "lat": 37.5665,
     "lon": 126.9780,
@@ -40,7 +41,7 @@ sudo apt-get install jq
   },
   "calendarUrl": "",
   "rssFeeds": [
-    "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
+    "https://news.google.com/rss?hl=en&gl=US&ceid=US:en"
   ],
   "refreshIntervals": {
     "weather": 30,
@@ -54,48 +55,60 @@ sudo apt-get install jq
 }
 ```
 
-## 타임존
+## Timezones
 
-- `Asia/Seoul` - 한국
-- `Asia/Tokyo` - 일본
-- `America/New_York` - 미국 동부
-- `America/Los_Angeles` - 미국 서부
-- `Europe/London` - 영국
+- `Asia/Seoul` - Korea
+- `Asia/Tokyo` - Japan
+- `America/New_York` - US Eastern
+- `America/Los_Angeles` - US Pacific
+- `Europe/London` - UK
 
-전체 목록: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+Full list: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 
-## 날씨 좌표
+## Date Formats
 
-좌표 찾기: https://www.latlong.net/
+Choose from these formats in settings:
+- `EEEE, MMMM dd, yyyy` - Wednesday, January 01, 2026
+- `MMMM dd, yyyy` - January 01, 2026
+- `yyyy-MM-dd` - 2026-01-01
+- `MM/dd/yyyy` - 01/01/2026
+- `dd/MM/yyyy` - 01/01/2026
+- `dd MMMM yyyy` - 01 January 2026
+- `EEE, MMM dd, yyyy` - Wed, Jan 01, 2026
+
+## Weather Coordinates
+
+Find coordinates: https://www.latlong.net/
 
 ## Google Calendar
 
-1. Google Calendar → 설정 및 공유
-2. 캘린더 통합 → 비공개 주소
-3. iCal 형식 URL 복사
+1. Google Calendar → Settings and sharing
+2. Integrate calendar → Secret address
+3. Copy iCal format URL
 
-## RSS 피드
+## RSS Feeds
 
-**한국**
-- Google News: `https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko`
-
-**해외**
+**International**
 - BBC: `https://feeds.bbci.co.uk/news/rss.xml`
 - CNN: `http://rss.cnn.com/rss/edition.rss`
 - Reuters: `https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best`
 
-## 새로고침 간격 (분)
+**Regional**
+- Google News (Korea): `https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko`
+- Google News (US): `https://news.google.com/rss?hl=en&gl=US&ceid=US:en`
 
-- Weather: 30-60 권장
-- Calendar: 15-30 권장
-- RSS: 15-30 권장
+## Refresh Intervals (minutes)
 
-## 표시 개수
+- Weather: 30-60 recommended
+- Calendar: 15-30 recommended
+- RSS: 15-30 recommended
 
-- Calendar: 1-10 (기본 5)
-- RSS: 1-10 (기본 7)
+## Display Limits
 
-## 저장 위치
+- Calendar: 1-10 (default 5)
+- RSS: 1-10 (default 7)
+
+## Storage Location
 
 - Browser localStorage
-- 초기화: 설정 페이지 → 초기화 버튼
+- Reset: Settings page → Reset button

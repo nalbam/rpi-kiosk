@@ -1,11 +1,11 @@
 # Development Guide
 
-## 요구사항
+## Requirements
 
 - Node.js 22 LTS
 - npm
 
-## 개발 환경 설정
+## Development Environment Setup
 
 ```bash
 git clone https://github.com/nalbam/rpi-kiosk.git
@@ -16,7 +16,7 @@ npm run dev
 
 http://localhost:3000
 
-## 프로젝트 구조
+## Project Structure
 
 ```
 app/
@@ -36,10 +36,10 @@ components/
 └── Weather/
 
 lib/
-├── config.ts         # 설정 타입 및 기본값
-├── constants.ts      # 시스템 상수 (API 제한, 검증 범위)
-├── storage.ts        # localStorage 관리
-└── urlValidation.ts  # SSRF 보호
+├── config.ts         # Configuration types and defaults
+├── constants.ts      # System constants (API limits, validation ranges)
+├── storage.ts        # localStorage management
+└── urlValidation.ts  # SSRF protection
 
 scripts/
 ├── install.sh
@@ -47,31 +47,31 @@ scripts/
 └── start-kiosk.sh
 ```
 
-## 스크립트
+## Scripts
 
-- `npm run dev` - 개발 서버
-- `npm run build` - 프로덕션 빌드
-- `npm start` - 프로덕션 실행
+- `npm run dev` - Development server
+- `npm run build` - Production build
+- `npm start` - Production server
 - `npm run lint` - ESLint
 
-## 개발 가이드
+## Development Guide
 
-### 코드 스타일
+### Code Style
 
-- TypeScript 사용
+- Use TypeScript
 - Functional components + hooks
 - Tailwind CSS
-- 작고 집중된 컴포넌트
+- Small, focused components
 
-### 새 기능 추가
+### Adding New Features
 
-1. `components/` 에 컴포넌트 생성
-2. 필요시 `app/api/` 에 API 라우트 추가
-3. `lib/config.ts` 설정 타입 업데이트
-4. `app/page.tsx` 에 컴포넌트 추가
-5. 설정 페이지 업데이트
+1. Create component in `components/`
+2. Add API route in `app/api/` if needed
+3. Update configuration types in `lib/config.ts`
+4. Add component to `app/page.tsx`
+5. Update settings page
 
-### API 라우트 패턴
+### API Route Pattern
 
 ```typescript
 import { NextResponse } from 'next/server';
@@ -86,14 +86,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Missing URL' }, { status: 400 });
   }
 
-  // SSRF 검증 필수
+  // SSRF validation required
   const validation = validateCalendarUrl(url);
   if (!validation.valid) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
   try {
-    // 타임아웃과 크기 제한 적용
+    // Apply timeout and size limits
     const response = await fetchWithTimeout(url, API.TIMEOUT_MS, API.MAX_RSS_SIZE);
     const data = await response.text();
     return NextResponse.json({ data });
@@ -103,16 +103,16 @@ export async function GET(request: Request) {
 }
 ```
 
-### 보안 체크리스트
+### Security Checklist
 
-외부 URL을 가져오는 모든 API 라우트는:
-- [ ] `validateCalendarUrl()` 로 URL 검증
-- [ ] `fetchWithTimeout()` 사용
-- [ ] `constants.ts` 의 상수 사용
-- [ ] 검증 실패 시 400 반환
-- [ ] 적절한 타임아웃과 크기 제한 설정
+All API routes fetching external URLs must:
+- [ ] Validate URL with `validateCalendarUrl()`
+- [ ] Use `fetchWithTimeout()`
+- [ ] Use constants from `constants.ts`
+- [ ] Return 400 on validation failure
+- [ ] Set appropriate timeout and size limits
 
-### 컴포넌트 패턴
+### Component Pattern
 
 ```typescript
 'use client';
@@ -151,9 +151,9 @@ export default function MyWidget() {
 }
 ```
 
-## 상수 관리
+## Constants Management
 
-### constants.ts (시스템 제약)
+### constants.ts (System Constraints)
 
 ```typescript
 export const API = {
@@ -167,48 +167,49 @@ export const PROCESSING_LIMITS = {
 } as const;
 ```
 
-### config.ts (사용자 설정)
+### config.ts (User Settings)
 
 ```typescript
 export interface KioskConfig {
   timezone: string;
+  dateFormat: string;
   refreshIntervals: { weather: number; calendar: number; rss: number };
   displayLimits: { calendarEvents: number; rssItems: number };
   // ...
 }
 ```
 
-## 빌드 및 배포
+## Build and Deploy
 
 ```bash
 npm run build
 npm start
 ```
 
-라즈베리파이 배포: `./scripts/install.sh` 참조
+For Raspberry Pi deployment, see `./scripts/install.sh`
 
-## Node.js 버전
+## Node.js Version
 
-`.nvmrc` 파일 포함:
+`.nvmrc` file included:
 
 ```bash
 nvm use
 ```
 
-## 문제 해결
+## Troubleshooting
 
-**포트 사용 중**
+**Port already in use**
 ```bash
 PORT=3001 npm run dev
 ```
 
-**의존성 문제**
+**Dependency issues**
 ```bash
 rm -rf node_modules package-lock.json
 npm install
 ```
 
-**빌드 오류**
+**Build errors**
 ```bash
-node --version  # v22.x.x 확인
+node --version  # Check for v22.x.x
 ```
