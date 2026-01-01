@@ -9,12 +9,47 @@ export default function SettingsPage() {
   const router = useRouter();
   const [config, setConfig] = useState<KioskConfig | null>(null);
   const [rssInput, setRssInput] = useState('');
+  const [timezones, setTimezones] = useState<string[]>([]);
 
   // Load configuration
   useEffect(() => {
     const currentConfig = getConfig();
     setConfig(currentConfig);
   }, []);
+
+  // Load available timezones
+  useEffect(() => {
+    try {
+      const availableTimezones = Intl.supportedValuesOf('timeZone');
+      setTimezones(availableTimezones);
+    } catch (error) {
+      console.error('Failed to load timezones:', error);
+      // Fallback to common timezones
+      setTimezones([
+        'UTC',
+        'America/New_York',
+        'America/Chicago',
+        'America/Denver',
+        'America/Los_Angeles',
+        'Europe/London',
+        'Europe/Paris',
+        'Asia/Tokyo',
+        'Asia/Seoul',
+        'Asia/Shanghai',
+        'Australia/Sydney',
+      ]);
+    }
+  }, []);
+
+  // Group timezones by region
+  const groupedTimezones = timezones.reduce((groups, tz) => {
+    const region = tz.includes('/') ? tz.split('/')[0] : 'Other';
+    if (!groups[region]) {
+      groups[region] = [];
+    }
+    groups[region].push(tz);
+    return groups;
+  }, {} as Record<string, string[]>);
 
   // Enable scrolling on settings page (disable kiosk mode overflow:hidden)
   useEffect(() => {
@@ -112,15 +147,23 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">Timezone</label>
-                <input
-                  type="text"
+                <select
                   value={config.timezone}
                   onChange={(e) => setConfig({ ...config, timezone: e.target.value })}
                   className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                  placeholder="Asia/Seoul"
-                />
+                >
+                  {Object.keys(groupedTimezones).sort().map((region) => (
+                    <optgroup key={region} label={region}>
+                      {groupedTimezones[region].map((tz) => (
+                        <option key={tz} value={tz}>
+                          {tz}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  Examples: Asia/Seoul, America/New_York, Europe/London
+                  Select your timezone from the list
                 </p>
               </div>
 
