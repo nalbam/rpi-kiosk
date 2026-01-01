@@ -5,9 +5,8 @@ import {
   createErrorResponse,
   createSuccessResponse,
   handleValidation,
-  getRequiredParam,
-  isErrorResponse,
 } from '@/lib/apiHelpers';
+import { getServerConfig } from '@/lib/configHelpers';
 
 interface CalendarEvent {
   title: string;
@@ -17,13 +16,14 @@ interface CalendarEvent {
   location: string;
 }
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+export async function GET() {
+  // Read configuration from server
+  const config = getServerConfig();
+  const calendarUrl = config.calendarUrl;
 
-  // Get and validate required parameter
-  const calendarUrl = getRequiredParam(searchParams, 'url');
-  if (isErrorResponse(calendarUrl)) {
-    return calendarUrl;
+  // If no calendar URL configured, return empty events
+  if (!calendarUrl || calendarUrl.trim() === '') {
+    return createSuccessResponse({ events: [] });
   }
 
   // Validate URL to prevent SSRF attacks

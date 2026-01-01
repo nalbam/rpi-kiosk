@@ -19,8 +19,7 @@ export default function Weather() {
   const { data: weather, loading, error } = useWidgetData<WeatherData>({
     componentName: 'Weather',
     refreshKey: 'weather',
-    buildUrl: (config) =>
-      `/api/weather?lat=${config.weatherLocation.lat}&lon=${config.weatherLocation.lon}`,
+    buildUrl: () => '/api/weather',
     validateResponse: (data): data is WeatherData =>
       typeof data === 'object' &&
       data !== null &&

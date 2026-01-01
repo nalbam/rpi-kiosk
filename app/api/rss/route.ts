@@ -4,9 +4,8 @@ import { API, PROCESSING_LIMITS } from '@/lib/constants';
 import {
   createErrorResponse,
   createSuccessResponse,
-  getRequiredParam,
-  isErrorResponse,
 } from '@/lib/apiHelpers';
+import { getServerConfig } from '@/lib/configHelpers';
 
 interface RSSItem {
   title: string;
@@ -15,17 +14,18 @@ interface RSSItem {
   source: string;
 }
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+export async function GET() {
+  // Read configuration from server
+  const config = getServerConfig();
+  const feedUrls = config.rssFeeds;
 
-  // Get and validate required parameter
-  const feedUrls = getRequiredParam(searchParams, 'urls');
-  if (isErrorResponse(feedUrls)) {
-    return feedUrls;
+  // If no RSS feeds configured, return empty items
+  if (!feedUrls || feedUrls.length === 0) {
+    return createSuccessResponse({ items: [] });
   }
 
   try {
-    const urls = feedUrls.split(',');
+    const urls = feedUrls;
     const allItems: RSSItem[] = [];
     let successCount = 0;
     let failCount = 0;

@@ -24,11 +24,7 @@ export default function RSS() {
   const { data, loading, error } = useWidgetData<RSSResponse>({
     componentName: 'RSS',
     refreshKey: 'rss',
-    buildUrl: (config) => {
-      // If no RSS feeds configured, return empty string (will be handled by validation)
-      if (config.rssFeeds.length === 0) return '';
-      return `/api/rss?urls=${encodeURIComponent(config.rssFeeds.join(','))}`;
-    },
+    buildUrl: () => '/api/rss',
     validateResponse: (data): data is RSSResponse =>
       typeof data === 'object' &&
       data !== null &&

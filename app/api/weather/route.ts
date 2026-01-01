@@ -1,21 +1,19 @@
 import { fetchWithTimeout } from '@/lib/urlValidation';
-import { validateCoordinates } from '@/lib/validation';
 import { API } from '@/lib/constants';
 import {
   createErrorResponse,
   createSuccessResponse,
-  handleValidation,
 } from '@/lib/apiHelpers';
+import { getServerConfig } from '@/lib/configHelpers';
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const lat = searchParams.get('lat');
-  const lon = searchParams.get('lon');
+export async function GET() {
+  // Read configuration from server
+  const config = getServerConfig();
+  const { lat, lon } = config.weatherLocation;
 
-  // Validate coordinates
-  const validationError = handleValidation(validateCoordinates(lat, lon));
-  if (validationError) {
-    return validationError;
+  // Validate coordinates from config
+  if (typeof lat !== 'number' || typeof lon !== 'number') {
+    return createErrorResponse('Invalid coordinates in server configuration', undefined, 500);
   }
 
   try {

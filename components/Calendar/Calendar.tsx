@@ -21,14 +21,10 @@ interface CalendarResponse {
 export default function Calendar() {
   const [displayLimit, setDisplayLimit] = useState(5);
 
-  const { data, loading, error, config } = useWidgetData<CalendarResponse>({
+  const { data, loading, error } = useWidgetData<CalendarResponse>({
     componentName: 'Calendar',
     refreshKey: 'calendar',
-    buildUrl: (config) => {
-      // If no calendar URL configured, return empty string (will be handled by validation)
-      if (!config.calendarUrl) return '';
-      return `/api/calendar?url=${encodeURIComponent(config.calendarUrl)}`;
-    },
+    buildUrl: () => '/api/calendar',
     validateResponse: (data): data is CalendarResponse =>
       typeof data === 'object' &&
       data !== null &&
