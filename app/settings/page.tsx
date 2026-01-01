@@ -6,6 +6,7 @@ import { getConfig, saveConfig, detectBrowserSettings, detectGeolocation } from 
 import { KioskConfig, DATE_FORMAT_OPTIONS, defaultConfig } from '@/lib/config';
 import { API } from '@/lib/constants';
 import { GeocodingResult } from '@/app/api/geocoding/route';
+import { Search, MapPin, Clock, Sparkles, Map, Navigation } from 'lucide-react';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function SettingsPage() {
   const [citySearchQuery, setCitySearchQuery] = useState('');
   const [citySearchResults, setCitySearchResults] = useState<GeocodingResult[]>([]);
   const [searchingCity, setSearchingCity] = useState(false);
+  const [timezoneFilter, setTimezoneFilter] = useState('');
 
   // Load configuration from server
   useEffect(() => {
@@ -53,6 +55,13 @@ export default function SettingsPage() {
     }
   }, []);
 
+  // Ensure selected timezone is in the list
+  useEffect(() => {
+    if (config && config.timezone && !timezones.includes(config.timezone)) {
+      setTimezones((prev) => [...prev, config.timezone].sort());
+    }
+  }, [config, timezones]);
+
   // Detect browser settings on mount
   useEffect(() => {
     try {
@@ -70,8 +79,14 @@ export default function SettingsPage() {
     }
   }, []);
 
+  // Filter timezones based on search query
+  const filteredTimezones = timezones.filter((tz) => {
+    if (!timezoneFilter.trim()) return true;
+    return tz.toLowerCase().includes(timezoneFilter.toLowerCase());
+  });
+
   // Group timezones by region
-  const groupedTimezones = timezones.reduce((groups, tz) => {
+  const groupedTimezones = filteredTimezones.reduce((groups, tz) => {
     const region = tz.includes('/') ? tz.split('/')[0] : 'Other';
     if (!groups[region]) {
       groups[region] = [];
@@ -232,14 +247,27 @@ export default function SettingsPage() {
       cityName += `, ${result.country}`;
     }
 
-    setConfig({
+    // Update config with coordinates, city name, and timezone if available
+    const updatedConfig: KioskConfig = {
       ...config,
       weatherLocation: {
         lat: result.latitude,
         lon: result.longitude,
         city: cityName,
       },
-    });
+    };
+
+    // Auto-set timezone if available
+    if (result.timezone) {
+      updatedConfig.timezone = result.timezone;
+
+      // If timezone is not in the current list, add it
+      if (!timezones.includes(result.timezone)) {
+        setTimezones([...timezones, result.timezone].sort());
+      }
+    }
+
+    setConfig(updatedConfig);
 
     // Clear search
     setCitySearchQuery('');
@@ -268,177 +296,142 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-6 min-w-0">
-          {/* Time Settings */}
+          {/* Location & Time Settings */}
           <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">
-            <h2 className="text-2xl font-semibold mb-4">Time Settings</h2>
+            <h2 className="text-2xl font-semibold mb-4">Location & Time Settings</h2>
+            <p className="text-sm text-gray-400 mb-6">
+              Search for your city to automatically set location, coordinates, and timezone
+            </p>
 
-            <div className="space-y-4">
-              <div>
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-2">
-                  <label className="block text-sm font-medium">Timezone</label>
-                  {detectedTimezone && (
-                    <button
-                      onClick={handleApplyDetectedTimezone}
-                      className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors whitespace-nowrap flex-shrink-0"
-                    >
-                      Use Browser Default ({detectedTimezone})
-                    </button>
-                  )}
-                </div>
-                <select
-                  value={config.timezone}
-                  onChange={(e) => setConfig({ ...config, timezone: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                >
-                  {Object.keys(groupedTimezones).sort().map((region) => (
-                    <optgroup key={region} label={region}>
-                      {groupedTimezones[region].map((tz) => (
-                        <option key={tz} value={tz}>
-                          {tz}
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Select your timezone from the list
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Date Format</label>
-                <select
-                  value={config.dateFormat}
-                  onChange={(e) => setConfig({ ...config, dateFormat: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                >
-                  {DATE_FORMAT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Choose how the date is displayed on the clock
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Time Server (Optional)</label>
-                <input
-                  type="text"
-                  value={config.timeServer || ''}
-                  onChange={(e) => setConfig({ ...config, timeServer: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                  placeholder="time.google.com"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Weather Settings */}
-          <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">
-            <h2 className="text-2xl font-semibold mb-4">Weather Settings</h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Search City</label>
+            <div className="space-y-6">
+              {/* City Search - Primary Method */}
+              <div className="bg-gray-800 rounded-lg p-4 border-2 border-blue-600">
+                <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <Search className="w-4 h-4" />
+                  Search City (Recommended)
+                </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={citySearchQuery}
                     onChange={(e) => setCitySearchQuery(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearchCity()}
-                    className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                    placeholder="Search for a city (e.g., Seoul, New York, London)"
+                    className="flex-1 px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                    placeholder="Search for your city (e.g., Seoul, Buenos Aires, Tokyo)"
                   />
                   <button
                     onClick={handleSearchCity}
                     disabled={searchingCity || !citySearchQuery.trim()}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-colors"
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded-lg transition-colors whitespace-nowrap"
                   >
                     {searchingCity ? 'Searching...' : 'Search'}
                   </button>
                 </div>
                 {citySearchResults.length > 0 && (
-                  <div className="mt-2 bg-gray-800 border border-gray-700 rounded-lg max-h-60 overflow-y-auto">
+                  <div className="mt-2 bg-gray-900 border border-gray-700 rounded-lg max-h-60 overflow-y-auto">
                     {citySearchResults.map((result, index) => (
                       <button
                         key={index}
                         onClick={() => handleSelectCity(result)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-700 transition-colors border-b border-gray-700 last:border-b-0"
+                        className="w-full text-left px-4 py-3 hover:bg-gray-800 transition-colors border-b border-gray-700 last:border-b-0"
                       >
-                        <div className="font-medium">{result.name}</div>
-                        <div className="text-sm text-gray-400">
+                        <div className="font-medium text-base">{result.name}</div>
+                        <div className="text-sm text-gray-400 mt-1">
                           {[result.admin1, result.admin2, result.country].filter(Boolean).join(', ')}
                         </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {result.latitude.toFixed(4)}, {result.longitude.toFixed(4)}
+                        <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-3">
+                          <span className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {result.latitude.toFixed(4)}, {result.longitude.toFixed(4)}
+                          </span>
+                          {result.timezone && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {result.timezone}
+                            </span>
+                          )}
                         </div>
                       </button>
                     ))}
                   </div>
                 )}
-                <p className="text-xs text-gray-500 mt-1">
-                  Search for a city to automatically set coordinates
+                <p className="text-xs text-gray-400 mt-2 flex items-center gap-2">
+                  <Sparkles className="w-3 h-3" />
+                  Selecting a city will automatically set: City Name, Coordinates, and Timezone
                 </p>
               </div>
 
-              <div>
-                <div className="flex flex-col gap-2 mb-2">
-                  <label className="block text-sm font-medium">City Name</label>
-                  <div className="flex flex-wrap gap-2">
-                    {detectedCity && (
-                      <button
-                        onClick={handleApplyDetectedCity}
-                        className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded transition-colors whitespace-nowrap"
-                      >
-                        Use Browser Default ({detectedCity})
-                      </button>
-                    )}
-                    {config?.timezone.includes('/') && (
-                      <button
-                        onClick={handleApplyCityFromTimezone}
-                        className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 rounded transition-colors whitespace-nowrap"
-                      >
-                        Use from Timezone ({config.timezone.split('/').pop()?.replace(/_/g, ' ')})
-                      </button>
-                    )}
-                  </div>
+              {/* Current Settings Display */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* City Name */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">City Name</label>
+                  <input
+                    type="text"
+                    value={config.weatherLocation.city}
+                    onChange={(e) => setConfig({
+                      ...config,
+                      weatherLocation: { ...config.weatherLocation, city: e.target.value }
+                    })}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                    placeholder="New York"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Display name (auto-filled from search)</p>
                 </div>
-                <input
-                  type="text"
-                  value={config.weatherLocation.city}
-                  onChange={(e) => setConfig({
-                    ...config,
-                    weatherLocation: { ...config.weatherLocation, city: e.target.value }
-                  })}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                  placeholder="New York"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  Display name for the city (automatically set when searching)
-                </p>
+
+                {/* Timezone */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">Timezone</label>
+                  <input
+                    type="text"
+                    value={timezoneFilter}
+                    onChange={(e) => setTimezoneFilter(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500 mb-2"
+                    placeholder="Filter timezone..."
+                  />
+                  <select
+                    value={config.timezone}
+                    onChange={(e) => setConfig({ ...config, timezone: e.target.value })}
+                    className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                    size={5}
+                  >
+                    {Object.keys(groupedTimezones).sort().map((region) => (
+                      <optgroup key={region} label={region}>
+                        {groupedTimezones[region].map((tz) => (
+                          <option key={tz} value={tz}>
+                            {tz}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {timezoneFilter ? `${filteredTimezones.length} matches` : 'Auto-filled from search'}
+                  </p>
+                </div>
               </div>
 
+              {/* Coordinates */}
               <div>
-                <div className="flex flex-col gap-2 mb-2">
+                <div className="flex justify-between items-center mb-2">
                   <label className="block text-sm font-medium">Coordinates</label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex gap-2">
                     <button
                       onClick={handleDetectLocation}
                       disabled={detectingLocation}
-                      className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded transition-colors whitespace-nowrap"
+                      className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded transition-colors whitespace-nowrap flex items-center gap-1"
                     >
-                      {detectingLocation ? 'Detecting...' : detectedCoordinates ? `Detected: ${detectedCoordinates.lat.toFixed(4)}, ${detectedCoordinates.lon.toFixed(4)}` : 'Detect Location'}
+                      <Navigation className="w-3 h-3" />
+                      {detectingLocation ? 'Detecting...' : 'Detect My Location'}
                     </button>
                     <a
                       href={`https://www.google.com/maps?q=${config.weatherLocation.lat},${config.weatherLocation.lon}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1 text-xs bg-purple-600 hover:bg-purple-700 rounded transition-colors whitespace-nowrap"
+                      className="px-3 py-1 text-xs bg-purple-600 hover:bg-purple-700 rounded transition-colors whitespace-nowrap flex items-center gap-1"
                     >
-                      View on Google Maps
+                      <Map className="w-3 h-3" />
+                      View on Map
                     </a>
                   </div>
                 </div>
@@ -464,7 +457,6 @@ export default function SettingsPage() {
                     />
                     <p className="text-xs text-gray-500 mt-1">-90 to 90</p>
                   </div>
-
                   <div>
                     <label className="block text-xs text-gray-400 mb-1">Longitude</label>
                     <input
@@ -483,32 +475,77 @@ export default function SettingsPage() {
                         }
                       }}
                       className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">-180 to 180</p>
+                    />
+                    <p className="text-xs text-gray-500 mt-1">-180 to 180</p>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400 mt-2">Auto-filled from city search or location detection</p>
+              </div>
+
+              <hr className="border-gray-700" />
+
+              {/* Advanced Time Settings */}
+              <div>
+                <h3 className="text-lg font-medium mb-4">Advanced Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Date Format</label>
+                    <select
+                      value={config.dateFormat}
+                      onChange={(e) => setConfig({ ...config, dateFormat: e.target.value })}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                    >
+                      {DATE_FORMAT_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Date display format
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Weather Refresh Interval</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={config.refreshIntervals.weather}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value >= 1) {
+                          setConfig({
+                            ...config,
+                            refreshIntervals: { ...config.refreshIntervals, weather: value }
+                          });
+                        }
+                      }}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Minutes between weather updates
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Time Server (Optional)</label>
+                    <input
+                      type="text"
+                      value={config.timeServer || ''}
+                      onChange={(e) => setConfig({ ...config, timeServer: e.target.value })}
+                      className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
+                      placeholder="time.google.com"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Custom NTP server
+                    </p>
                   </div>
                 </div>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Refresh Interval (minutes)</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={config.refreshIntervals.weather}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (!isNaN(value) && value >= 1) {
-                      setConfig({
-                        ...config,
-                        refreshIntervals: { ...config.refreshIntervals, weather: value }
-                      });
-                    }
-                  }}
-                  className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-blue-500"
-                />
-              </div>
             </div>
           </div>
+
 
           {/* Calendar Settings */}
           <div className="bg-gray-900 rounded-lg p-4 sm:p-6 border border-gray-800 min-w-0">

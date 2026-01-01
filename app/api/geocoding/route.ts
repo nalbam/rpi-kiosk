@@ -9,6 +9,7 @@ export interface GeocodingResult {
   country: string;
   admin1?: string;
   admin2?: string;
+  timezone?: string;
 }
 
 export async function GET(request: Request) {
@@ -32,8 +33,9 @@ export async function GET(request: Request) {
 
   try {
     // Using Open-Meteo Geocoding API (free, no API key required)
+    // Note: timezone parameter is required to get timezone information
     const response = await fetchWithTimeout(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json`,
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=10&language=en&format=json&timezone=auto`,
       API.TIMEOUT_MS,
       API.MAX_WEATHER_SIZE
     );
@@ -57,6 +59,7 @@ export async function GET(request: Request) {
       country: result.country,
       admin1: result.admin1,
       admin2: result.admin2,
+      timezone: result.timezone,
     }));
 
     return NextResponse.json({ results });
