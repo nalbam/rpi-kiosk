@@ -32,12 +32,12 @@ export const DATE_FORMAT_OPTIONS = [
 ] as const;
 
 export const defaultConfig: KioskConfig = {
-  timezone: 'America/Los_Angeles',
+  timezone: 'America/New_York',
   dateFormat: 'EEEE, MMMM dd, yyyy',
   weatherLocation: {
-    lat: 34.04657,
-    lon: -118.244,
-    city: 'Los Angeles'
+    lat: 40.7128,
+    lon: -74.0060,
+    city: 'New York'
   },
   rssFeeds: [
     'https://news.google.com/rss?hl=en&gl=US&ceid=US:en',

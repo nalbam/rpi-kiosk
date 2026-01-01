@@ -13,8 +13,8 @@
 #
 # Examples:
 #   ./scripts/config.sh init
-#   ./scripts/config.sh set timezone "Asia/Seoul"
-#   ./scripts/config.sh set weatherLocation.lat 37.5665
+#   ./scripts/config.sh set timezone "America/New_York"
+#   ./scripts/config.sh set weatherLocation.lat 40.7128
 #   ./scripts/config.sh get timezone
 #   ./scripts/config.sh list
 #

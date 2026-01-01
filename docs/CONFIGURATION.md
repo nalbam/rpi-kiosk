@@ -39,9 +39,9 @@ sudo apt-get install jq
 ./scripts/config.sh init
 
 # Set values
-./scripts/config.sh set timezone "Asia/Seoul"
-./scripts/config.sh set weatherLocation.lat 37.5665
-./scripts/config.sh set weatherLocation.city "Seoul"
+./scripts/config.sh set timezone "America/New_York"
+./scripts/config.sh set weatherLocation.lat 40.7128
+./scripts/config.sh set weatherLocation.city "New York"
 
 # Get value
 ./scripts/config.sh get timezone
@@ -58,12 +58,12 @@ sudo apt-get install jq
 
 Example:
 ```
-config.json: timezone = "Asia/Seoul" (same as default)
-Browser detected: timezone = "America/New_York"
-→ Result: "America/New_York" (browser wins because config matches default)
+config.json: timezone = "America/New_York" (same as default)
+Browser detected: timezone = "Asia/Seoul"
+→ Result: "Asia/Seoul" (browser wins because config matches default)
 
 config.json: timezone = "Europe/London" (different from default)
-Browser detected: timezone = "America/New_York"
+Browser detected: timezone = "Asia/Seoul"
 → Result: "Europe/London" (config wins because it's explicitly set)
 ```
 
@@ -71,12 +71,12 @@ Browser detected: timezone = "America/New_York"
 
 ```json
 {
-  "timezone": "Asia/Seoul",
+  "timezone": "America/New_York",
   "dateFormat": "EEEE, MMMM dd, yyyy",
   "weatherLocation": {
-    "lat": 37.5665,
-    "lon": 126.9780,
-    "city": "Seoul"
+    "lat": 40.7128,
+    "lon": -74.0060,
+    "city": "New York"
   },
   "calendarUrl": "",
   "rssFeeds": [

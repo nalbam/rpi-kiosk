@@ -100,7 +100,7 @@ Manage settings with shell script:
 
 **Priority**: localStorage > config.json > browser-detected > defaults
 
-**Smart Merge**: If config.json values match defaults (e.g., Asia/Seoul, Seoul, 37.5665/126.978), browser-detected values are used instead. Only explicitly different values override auto-detection.
+**Smart Merge**: If config.json values match defaults (e.g., America/New_York, New York, 40.7128/-74.0060), browser-detected values are used instead. Only explicitly different values override auto-detection.
 
 ### Configuration Options
 
