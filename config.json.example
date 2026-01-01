@@ -1,15 +1,17 @@
 {
-  "_comment": "Copy this file to config.json to customize settings",
-  "_note": "If timezone/city/coordinates match defaults (Asia/Seoul, Seoul, 37.5665/126.978), browser-detected values will be used instead",
+  "_comment": "Example configuration file for RPI Kiosk",
+  "_note": "On first visit, the application will auto-detect timezone, city, and coordinates from browser. You can customize these values manually.",
   "timezone": "Asia/Seoul",
   "dateFormat": "EEEE, MMMM dd, yyyy",
   "weatherLocation": {
     "lat": 37.5665,
-    "lon": 126.978,
+    "lon": 126.9780,
     "city": "Seoul"
   },
   "calendarUrl": "",
-  "rssFeeds": [],
+  "rssFeeds": [
+    "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
+  ],
   "refreshIntervals": {
     "weather": 30,
     "calendar": 15,
