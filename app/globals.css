@@ -70,4 +70,77 @@ body {
     flex: 1;
     min-height: 0;
   }
+
+  /* Weather icon sizing */
+  .weather-icon {
+    width: clamp(100px, 12vh, 180px);
+    height: clamp(100px, 12vh, 180px);
+  }
+
+  /* Weather icon animations */
+  .weather-icon-sun {
+    animation: rotate 20s linear infinite;
+  }
+
+  .weather-icon-cloud {
+    animation: sway 4s ease-in-out infinite;
+  }
+
+  .weather-icon-fog {
+    animation: fade 3s ease-in-out infinite;
+  }
+
+  .weather-icon-rain {
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  .weather-icon-snow {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .weather-icon-lightning {
+    animation: flash 2s ease-in-out infinite;
+  }
+
+  .weather-icon-thermometer {
+    animation: pulse 2s ease-in-out infinite;
+  }
+}
+
+/* Weather animation keyframes */
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes sway {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+}
+
+@keyframes fade {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  25% { transform: translateY(-5px) translateX(5px); }
+  50% { transform: translateY(-10px) translateX(0); }
+  75% { transform: translateY(-5px) translateX(-5px); }
+}
+
+@keyframes flash {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0.5; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
