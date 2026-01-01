@@ -139,7 +139,23 @@ export async function detectGeolocation(): Promise<{ lat: number; lon: number } 
         });
       },
       (error) => {
-        console.warn('Geolocation detection failed:', error.message);
+        // GeolocationPositionError codes:
+        // 1 = PERMISSION_DENIED
+        // 2 = POSITION_UNAVAILABLE
+        // 3 = TIMEOUT
+        const errorTypes = {
+          1: 'PERMISSION_DENIED',
+          2: 'POSITION_UNAVAILABLE',
+          3: 'TIMEOUT'
+        };
+        console.warn('Geolocation detection failed:', {
+          code: error.code,
+          type: errorTypes[error.code as 1 | 2 | 3] || 'UNKNOWN',
+          message: error.message,
+          isSecureContext: window.isSecureContext,
+          protocol: window.location.protocol,
+          hostname: window.location.hostname
+        });
         resolve(null);
       },
       {
