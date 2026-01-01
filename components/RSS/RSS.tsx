@@ -81,10 +81,9 @@ export default function RSS() {
     );
   }
 
-  const displayItems = items.slice(currentIndex, currentIndex + 5);
-  if (displayItems.length < 5) {
-    displayItems.push(...items.slice(0, 5 - displayItems.length));
-  }
+  const displayItems = items.length > 0 
+    ? Array.from({ length: Math.min(5, items.length) }).map((_, i) => items[(currentIndex + i) % items.length])
+    : [];
 
   return (
     <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
@@ -98,7 +97,7 @@ export default function RSS() {
               rel="noopener noreferrer"
               className="hover:text-blue-400 transition-colors"
             >
-              <div className="font-medium mb-1 line-clamp-2">{item.title}</div>
+              <div className="font-medium mb-1 overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.title}</div>
             </a>
             <div className="flex justify-between text-xs text-gray-500">
               <span>{item.source}</span>
