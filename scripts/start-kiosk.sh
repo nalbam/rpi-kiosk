@@ -1,10 +1,21 @@
 #!/bin/bash
 
 # RPI Kiosk Mode Startup Script
-# This script starts the Next.js application in kiosk mode
+# This script starts the Next.js application and Chromium in kiosk mode
+
+# Exit on error
+set -e
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APP_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Set display
 export DISPLAY=:0
+export XAUTHORITY=${XAUTHORITY:-$HOME/.Xauthority}
+
+echo "Starting RPI Kiosk..."
+echo "App directory: $APP_DIR"
 
 # Disable screensaver
 xset s off
@@ -26,21 +37,46 @@ else
     exit 1
 fi
 
+echo "Using browser: $CHROMIUM_CMD"
+
 # Remove previous session (fix crash warnings)
 if [ -f "$CHROMIUM_CONFIG_DIR/Default/Preferences" ]; then
     sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
     sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' "$CHROMIUM_CONFIG_DIR/Default/Preferences"
 fi
 
-# Start Next.js application in development mode (change to production as needed)
-cd /home/pi/rpi-kiosk
-# npm run build
-npm start &
+# Start Next.js application in background
+cd "$APP_DIR"
+echo "Starting Next.js server..."
+NODE_ENV=production npm start &
+SERVER_PID=$!
 
-# Wait for the server to start
-sleep 10
+# Function to cleanup on exit
+cleanup() {
+    echo "Stopping server (PID: $SERVER_PID)..."
+    kill $SERVER_PID 2>/dev/null || true
+    exit 0
+}
 
-# Start Chromium in kiosk mode
+trap cleanup SIGTERM SIGINT
+
+# Wait for the server to be ready
+echo "Waiting for server to be ready..."
+for i in {1..30}; do
+    if curl -s http://localhost:3000 > /dev/null 2>&1; then
+        echo "Server is ready!"
+        break
+    fi
+    if [ $i -eq 30 ]; then
+        echo "Error: Server failed to start within 30 seconds"
+        cleanup
+        exit 1
+    fi
+    sleep 1
+done
+
+# Start Chromium in kiosk mode (foreground)
+echo "Starting Chromium in kiosk mode..."
 $CHROMIUM_CMD \
   --noerrdialogs \
   --disable-infobars \
@@ -49,3 +85,6 @@ $CHROMIUM_CMD \
   --disable-session-crashed-bubble \
   --disable-features=TranslateUI \
   http://localhost:3000
+
+# Cleanup when Chromium exits
+cleanup
