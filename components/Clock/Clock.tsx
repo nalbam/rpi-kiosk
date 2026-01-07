@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
 import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
 
@@ -45,6 +46,9 @@ export default function Clock() {
 
   const zonedTime = toZonedTime(time, timezone);
 
+  // Determine locale based on date format
+  const locale = dateFormat.includes('년') ? ko : undefined;
+
   return (
     <div className="text-center">
       <div className="text-vw-8xl font-bold mb-vw-xs">
@@ -52,7 +56,7 @@ export default function Clock() {
         <span className="text-vw-3xl">{format(zonedTime, ':ss')}</span>
       </div>
       <div className="text-vw-2xl text-gray-400">
-        {format(zonedTime, dateFormat)}
+        {format(zonedTime, dateFormat, { locale })}
       </div>
       <div className="text-vw-base text-gray-500 mt-vw-xs">
         {timezone}

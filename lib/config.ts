@@ -22,13 +22,14 @@ export interface KioskConfig {
 
 // Available date format options
 export const DATE_FORMAT_OPTIONS = [
-  { value: 'EEEE, MMMM dd, yyyy', label: 'Wednesday, January 01, 2026' },
-  { value: 'MMMM dd, yyyy', label: 'January 01, 2026' },
-  { value: 'yyyy-MM-dd', label: '2026-01-01' },
-  { value: 'MM/dd/yyyy', label: '01/01/2026' },
-  { value: 'dd/MM/yyyy', label: '01/01/2026' },
-  { value: 'dd MMMM yyyy', label: '01 January 2026' },
-  { value: 'EEE, MMM dd, yyyy', label: 'Wed, Jan 01, 2026' },
+  { value: 'EEEE, MMMM dd, yyyy', label: 'Wednesday, January 01, 2026', locale: 'en' },
+  { value: 'MMMM dd, yyyy', label: 'January 01, 2026', locale: 'en' },
+  { value: 'yyyy-MM-dd', label: '2026-01-01', locale: 'en' },
+  { value: 'MM/dd/yyyy', label: '01/01/2026', locale: 'en' },
+  { value: 'dd/MM/yyyy', label: '01/01/2026', locale: 'en' },
+  { value: 'dd MMMM yyyy', label: '01 January 2026', locale: 'en' },
+  { value: 'EEE, MMM dd, yyyy', label: 'Wed, Jan 01, 2026', locale: 'en' },
+  { value: 'yyyy년 M월 d일 EEEE', label: '2026년 1월 8일 수요일', locale: 'ko' },
 ] as const;
 
 export const defaultConfig: KioskConfig = {
