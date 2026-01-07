@@ -497,8 +497,8 @@ export default function LocationSettings({
                 aria-label="Date display format"
                 aria-describedby="date-format-hint"
               >
-                {DATE_FORMAT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
+                {DATE_FORMAT_OPTIONS.map((option, index) => (
+                  <option key={`${option.value}-${option.locale}-${index}`} value={option.value}>
                     {option.label}
                   </option>
                 ))}

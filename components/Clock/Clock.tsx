@@ -2,9 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { ko, ja, zhCN } from 'date-fns/locale';
 import { toZonedTime } from 'date-fns-tz';
 import { useConfigWithRetry } from '@/lib/hooks/useConfigWithRetry';
+import { getLocaleFromDateFormat, type DateFormatLocale } from '@/lib/config';
+
+// Map locale string to date-fns locale object
+const LOCALE_MAP = {
+  en: undefined, // English is default
+  ko: ko,        // Korean
+  ja: ja,        // Japanese
+  'zh-CN': zhCN, // Chinese (Simplified)
+} as const;
 
 export default function Clock() {
   const [time, setTime] = useState<Date | null>(null);
@@ -46,8 +55,9 @@ export default function Clock() {
 
   const zonedTime = toZonedTime(time, timezone);
 
-  // Determine locale based on date format
-  const locale = dateFormat.includes('년') ? ko : undefined;
+  // Get locale from date format using helper function
+  const localeKey = getLocaleFromDateFormat(dateFormat);
+  const locale = LOCALE_MAP[localeKey];
 
   return (
     <div className="text-center">
