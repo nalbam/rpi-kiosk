@@ -276,7 +276,8 @@ export async function initializeConfig(): Promise<void> {
     const config = await getConfig();
 
     // Check if already initialized (config.json exists)
-    if ((config as any)._initialized !== false) {
+    const configWithInit = config as KioskConfig & { _initialized?: boolean };
+    if (configWithInit._initialized !== false) {
       return;
     }
 

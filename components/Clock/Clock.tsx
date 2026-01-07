@@ -10,7 +10,7 @@ export default function Clock() {
   const [timezone, setTimezone] = useState('UTC');
   const [dateFormat, setDateFormat] = useState('EEEE, MMMM dd, yyyy');
 
-  const { config } = useConfigWithRetry({
+  const { config: _config } = useConfigWithRetry({
     componentName: 'Clock',
     onConfigReady: (config) => {
       setTimezone(config.timezone);

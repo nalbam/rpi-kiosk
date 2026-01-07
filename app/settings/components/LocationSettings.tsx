@@ -172,7 +172,7 @@ export default function LocationSettings({
 
       // Priority: GPS > IP-based location
       // GPS provides more accurate coordinates and city (via reverse geocoding)
-      let finalCoords = gpsCoords || (ipLocation ? { lat: ipLocation.lat, lon: ipLocation.lon } : null);
+      const finalCoords = gpsCoords || (ipLocation ? { lat: ipLocation.lat, lon: ipLocation.lon } : null);
       let finalCity: string | null = null;
       let finalTimezone = ipLocation?.timezone || null;
 

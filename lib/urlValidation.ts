@@ -1,5 +1,7 @@
 import { URL } from 'url';
 import { isIP } from 'net';
+import * as https from 'https';
+import * as http from 'http';
 import { API } from './constants';
 
 /**
@@ -156,9 +158,6 @@ export async function fetchWithTimeout(
       reject(new Error('Too many redirects'));
       return;
     }
-    const https = require('https');
-    const http = require('http');
-    const { URL } = require('url');
 
     const parsedUrl = new URL(url);
     const isHttps = parsedUrl.protocol === 'https:';
@@ -176,7 +175,7 @@ export async function fetchWithTimeout(
       },
     };
 
-    const req = client.request(options, (res: any) => {
+    const req = client.request(options, (res: http.IncomingMessage) => {
       // Check response size
       const contentLength = res.headers['content-length'];
       if (contentLength && parseInt(contentLength, 10) > maxSize) {
@@ -186,7 +185,8 @@ export async function fetchWithTimeout(
       }
 
       // Handle redirects manually (follow up to 5 redirects)
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+      const statusCode = res.statusCode || 0;
+      if (statusCode >= 300 && statusCode < 400 && res.headers.location) {
         const redirectUrl = new URL(res.headers.location, url).toString();
         fetchWithTimeout(redirectUrl, timeoutMs, maxSize, redirectCount + 1).then(resolve).catch(reject);
         return;
@@ -212,8 +212,8 @@ export async function fetchWithTimeout(
 
         // Create a Response-like object
         const response = {
-          ok: res.statusCode >= 200 && res.statusCode < 300,
-          status: res.statusCode,
+          ok: statusCode >= 200 && statusCode < 300,
+          status: statusCode,
           statusText: res.statusMessage,
           headers: {
             get: (name: string) => res.headers[name.toLowerCase()] || null,

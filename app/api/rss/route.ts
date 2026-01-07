@@ -28,7 +28,7 @@ export async function GET() {
     const urls = feedUrls;
     const allItems: RSSItem[] = [];
     let successCount = 0;
-    let failCount = 0;
+    let _failCount = 0;
 
     for (const url of urls) {
       const trimmedUrl = url.trim();
@@ -37,7 +37,7 @@ export async function GET() {
       const validation = validateCalendarUrl(trimmedUrl);
       if (!validation.valid) {
         console.error(`Invalid RSS feed URL ${trimmedUrl}: ${validation.error}`);
-        failCount++;
+        _failCount++;
         continue; // Skip invalid URLs but continue with others
       }
 
@@ -60,7 +60,7 @@ export async function GET() {
         successCount++;
       } catch (error) {
         console.error(`Failed to fetch RSS feed ${trimmedUrl}:`, error);
-        failCount++;
+        _failCount++;
       }
     }
 

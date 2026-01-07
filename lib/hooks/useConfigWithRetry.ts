@@ -54,7 +54,8 @@ export function useConfigWithRetry(options: UseConfigWithRetryOptions = {}) {
       const fetchedConfig = await getConfig();
 
       // Check if config is not yet initialized (first visit)
-      if ((fetchedConfig as any)._initialized === false && retryCount < maxRetries) {
+      const configWithInit = fetchedConfig as KioskConfig & { _initialized?: boolean };
+      if (configWithInit._initialized === false && retryCount < maxRetries) {
         retryCount++;
         setTimeout(() => {
           if (isMounted) {
@@ -66,13 +67,13 @@ export function useConfigWithRetry(options: UseConfigWithRetryOptions = {}) {
 
       // Config is ready or max retries reached
       if (isMounted) {
-        if ((fetchedConfig as any)._initialized === false) {
+        if (configWithInit._initialized === false) {
           console.warn(`${componentName}: Config initialization timeout after ${maxRetries} retries`);
         }
 
         setConfig(fetchedConfig);
         setIsLoading(false);
-        setIsInitialized((fetchedConfig as any)._initialized !== false);
+        setIsInitialized(configWithInit._initialized !== false);
 
         if (onConfigReadyRef.current) {
           onConfigReadyRef.current(fetchedConfig);
