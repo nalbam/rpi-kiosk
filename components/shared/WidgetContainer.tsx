@@ -9,6 +9,7 @@ interface WidgetContainerProps {
   empty?: boolean;
   emptyMessage?: string;
   children: ReactNode;
+  className?: string;
 }
 
 /**
@@ -43,8 +44,9 @@ export function WidgetContainer({
   empty = false,
   emptyMessage = 'No data available',
   children,
+  className = '',
 }: WidgetContainerProps) {
-  const containerClasses = "bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col";
+  const containerClasses = `bg-gray-900 rounded-lg p-vw-sm border border-gray-800 h-full flex flex-col ${className}`;
 
   if (loading) {
     return (

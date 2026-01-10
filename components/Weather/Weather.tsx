@@ -48,6 +48,66 @@ export default function Weather() {
     return <Thermometer {...iconProps} className="weather-icon text-gray-400 weather-icon-thermometer" />;
   };
 
+  const getWeatherEffect = (code: number): string => {
+    // Clear/Sunny
+    if (code === 0 || code === 1 || code === 2) return 'sunny';
+    // Cloudy
+    if (code === 3) return 'cloudy';
+    // Fog
+    if (code >= 45 && code <= 48) return 'foggy';
+    // Rain/Drizzle
+    if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'rainy';
+    // Snow
+    if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 'snowy';
+    // Thunderstorm/Lightning
+    if (code >= 95) return 'lightning';
+    // Default
+    return 'none';
+  };
+
+  const renderWeatherBackground = (effect: string) => {
+    if (effect === 'none') return null;
+
+    return (
+      <div className="weather-background-container">
+        {effect === 'sunny' && (
+          <div className="weather-effect-sunny"></div>
+        )}
+        {effect === 'cloudy' && (
+          <div className="weather-effect-cloudy">
+            <div className="cloud cloud-1"></div>
+            <div className="cloud cloud-2"></div>
+            <div className="cloud cloud-3"></div>
+          </div>
+        )}
+        {effect === 'foggy' && (
+          <div className="weather-effect-foggy">
+            <div className="fog-layer fog-layer-1"></div>
+            <div className="fog-layer fog-layer-2"></div>
+            <div className="fog-layer fog-layer-3"></div>
+          </div>
+        )}
+        {effect === 'rainy' && (
+          <div className="weather-effect-rainy">
+            {Array.from({ length: 50 }).map((_, i) => (
+              <div key={i} className="rain-drop" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 2}s` }}></div>
+            ))}
+          </div>
+        )}
+        {effect === 'snowy' && (
+          <div className="weather-effect-snowy">
+            {Array.from({ length: 30 }).map((_, i) => (
+              <div key={i} className="snow-flake" style={{ left: `${Math.random() * 100}%`, animationDelay: `${Math.random() * 3}s`, animationDuration: `${3 + Math.random() * 2}s` }}></div>
+            ))}
+          </div>
+        )}
+        {effect === 'lightning' && (
+          <div className="weather-effect-lightning"></div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <WidgetContainer
       title="Weather"
@@ -56,24 +116,28 @@ export default function Weather() {
       error={error}
       errorMessage="Unable to fetch weather"
       empty={!weather}
+      className="relative overflow-hidden"
     >
       {weather && (
-        <div className="text-center flex-1 flex flex-col justify-center gap-vw-sm">
-          <div className="flex justify-center">{getWeatherIcon(weather.weatherCode)}</div>
-          <div className="text-vw-5xl font-bold">{weather.temperature}°C</div>
-          <div className="text-vw-xl text-gray-300">{weather.description}</div>
-          <div className="text-vw-lg text-gray-400">{city}</div>
-          <div className="mt-vw-xs grid grid-cols-2 gap-vw-sm text-vw-sm text-gray-400">
-            <div>
-              <div>Humidity</div>
-              <div className="text-white text-vw-base">{weather.humidity}%</div>
-            </div>
-            <div>
-              <div>Wind</div>
-              <div className="text-white text-vw-base">{weather.windSpeed} km/h</div>
+        <>
+          {renderWeatherBackground(getWeatherEffect(weather.weatherCode))}
+          <div className="text-center flex-1 flex flex-col justify-center gap-vw-sm relative z-10">
+            <div className="flex justify-center">{getWeatherIcon(weather.weatherCode)}</div>
+            <div className="text-vw-5xl font-bold">{weather.temperature}°C</div>
+            <div className="text-vw-xl text-gray-300">{weather.description}</div>
+            <div className="text-vw-lg text-gray-400">{city}</div>
+            <div className="mt-vw-xs grid grid-cols-2 gap-vw-sm text-vw-sm text-gray-400">
+              <div>
+                <div>Humidity</div>
+                <div className="text-white text-vw-base">{weather.humidity}%</div>
+              </div>
+              <div>
+                <div>Wind</div>
+                <div className="text-white text-vw-base">{weather.windSpeed} km/h</div>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </WidgetContainer>
   );

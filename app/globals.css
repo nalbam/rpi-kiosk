@@ -69,6 +69,39 @@ body {
   .text-vw-5xl { font-size: var(--size-6xl); }
   .text-vw-8xl { font-size: var(--size-8xl); }
 
+  /* Viewport-relative spacing */
+  .gap-vw-xs { gap: var(--spacing-xs); }
+  .gap-vw-sm { gap: var(--spacing-sm); }
+  .gap-vw-md { gap: var(--spacing-md); }
+  .gap-vw-lg { gap: var(--spacing-lg); }
+  .gap-vw-xl { gap: var(--spacing-xl); }
+
+  .p-vw-xs { padding: var(--spacing-xs); }
+  .p-vw-sm { padding: var(--spacing-sm); }
+  .p-vw-md { padding: var(--spacing-md); }
+  .p-vw-lg { padding: var(--spacing-lg); }
+  .p-vw-xl { padding: var(--spacing-xl); }
+
+  .mt-vw-xs { margin-top: var(--spacing-xs); }
+  .mt-vw-sm { margin-top: var(--spacing-sm); }
+  .mt-vw-md { margin-top: var(--spacing-md); }
+  .mt-vw-lg { margin-top: var(--spacing-lg); }
+  .mt-vw-xl { margin-top: var(--spacing-xl); }
+
+  .mb-vw-xs { margin-bottom: var(--spacing-xs); }
+  .mb-vw-sm { margin-bottom: var(--spacing-sm); }
+  .mb-vw-md { margin-bottom: var(--spacing-md); }
+  .mb-vw-lg { margin-bottom: var(--spacing-lg); }
+  .mb-vw-xl { margin-bottom: var(--spacing-xl); }
+
+  .py-vw-xs { padding-top: var(--spacing-xs); padding-bottom: var(--spacing-xs); }
+  .py-vw-sm { padding-top: var(--spacing-sm); padding-bottom: var(--spacing-sm); }
+
+  .pl-vw-sm { padding-left: var(--spacing-sm); }
+  .pl-vw-md { padding-left: var(--spacing-md); }
+
+  .space-y-vw-xs > * + * { margin-top: var(--spacing-xs); }
+
   /* Container that fills viewport */
   .container-fullscreen {
     width: 100vw;
@@ -119,6 +152,175 @@ body {
   .weather-icon-thermometer {
     animation: pulse 2s ease-in-out infinite;
   }
+
+  /* Weather background effects */
+  .weather-background-container {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  /* Sunny effect - radial gradient pulse */
+  .weather-effect-sunny {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 40%, transparent 70%);
+    animation: sunnyPulse 4s ease-in-out infinite;
+  }
+
+  /* Cloudy effect - moving clouds */
+  .weather-effect-cloudy {
+    position: absolute;
+    inset: 0;
+  }
+
+  .cloud {
+    position: absolute;
+    background: rgba(156, 163, 175, 0.2);
+    border-radius: 100px;
+    opacity: 0.6;
+  }
+
+  .cloud::before,
+  .cloud::after {
+    content: '';
+    position: absolute;
+    background: rgba(156, 163, 175, 0.2);
+    border-radius: 100px;
+  }
+
+  .cloud-1 {
+    width: 100px;
+    height: 40px;
+    top: 20%;
+    animation: cloudDrift1 20s ease-in-out infinite;
+  }
+
+  .cloud-1::before {
+    width: 50px;
+    height: 40px;
+    top: -20px;
+    left: 10px;
+  }
+
+  .cloud-1::after {
+    width: 60px;
+    height: 30px;
+    top: -10px;
+    right: 10px;
+  }
+
+  .cloud-2 {
+    width: 120px;
+    height: 50px;
+    top: 50%;
+    animation: cloudDrift2 25s ease-in-out infinite;
+  }
+
+  .cloud-2::before {
+    width: 60px;
+    height: 50px;
+    top: -25px;
+    left: 15px;
+  }
+
+  .cloud-2::after {
+    width: 70px;
+    height: 40px;
+    top: -15px;
+    right: 15px;
+  }
+
+  .cloud-3 {
+    width: 90px;
+    height: 35px;
+    top: 70%;
+    animation: cloudDrift3 30s ease-in-out infinite;
+  }
+
+  .cloud-3::before {
+    width: 45px;
+    height: 35px;
+    top: -18px;
+    left: 12px;
+  }
+
+  .cloud-3::after {
+    width: 55px;
+    height: 28px;
+    top: -10px;
+    right: 12px;
+  }
+
+  /* Foggy effect - horizontal fog layers */
+  .weather-effect-foggy {
+    position: absolute;
+    inset: 0;
+  }
+
+  .fog-layer {
+    position: absolute;
+    width: 200%;
+    height: 30%;
+    background: linear-gradient(90deg, transparent, rgba(156, 163, 175, 0.3), transparent);
+    opacity: 0.6;
+  }
+
+  .fog-layer-1 {
+    top: 10%;
+    animation: fogDrift1 15s linear infinite;
+  }
+
+  .fog-layer-2 {
+    top: 40%;
+    animation: fogDrift2 20s linear infinite;
+  }
+
+  .fog-layer-3 {
+    top: 70%;
+    animation: fogDrift3 18s linear infinite;
+  }
+
+  /* Rainy effect container */
+  .weather-effect-rainy {
+    position: absolute;
+    inset: 0;
+  }
+
+  .rain-drop {
+    position: absolute;
+    top: -10%;
+    width: 2px;
+    height: 20px;
+    background: linear-gradient(to bottom, transparent, rgba(96, 165, 250, 0.6));
+    animation: rainFall 1s linear infinite;
+  }
+
+  /* Snowy effect container */
+  .weather-effect-snowy {
+    position: absolute;
+    inset: 0;
+  }
+
+  .snow-flake {
+    position: absolute;
+    top: -10%;
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    animation: snowFall 5s linear infinite;
+  }
+
+  /* Lightning effect - flash background */
+  .weather-effect-lightning {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 30%, rgba(167, 139, 250, 0.2) 0%, transparent 60%);
+    animation: lightningFlash 4s ease-in-out infinite;
+  }
 }
 
 /* Weather animation keyframes */
@@ -157,4 +359,110 @@ body {
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.05); }
+}
+
+/* Weather background effect keyframes */
+@keyframes sunnyPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes rainFall {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh);
+    opacity: 0.3;
+  }
+}
+
+@keyframes snowFall {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) translateX(50px) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes lightningFlash {
+  0%, 45%, 55%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  90%, 92%, 94% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes cloudDrift1 {
+  0%, 100% {
+    left: -10%;
+    transform: translateX(0);
+  }
+  50% {
+    left: 110%;
+    transform: translateX(0);
+  }
+}
+
+@keyframes cloudDrift2 {
+  0%, 100% {
+    left: -15%;
+    transform: translateX(0);
+  }
+  50% {
+    left: 115%;
+    transform: translateX(0);
+  }
+}
+
+@keyframes cloudDrift3 {
+  0%, 100% {
+    left: -12%;
+    transform: translateX(0);
+  }
+  50% {
+    left: 112%;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fogDrift1 {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 0%;
+  }
+}
+
+@keyframes fogDrift2 {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 0%;
+  }
+}
+
+@keyframes fogDrift3 {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 0%;
+  }
 }
