@@ -65,22 +65,29 @@ export default function Calendar() {
 
           let timeDisplay = '';
           if (event.isAllDay) {
-            // For all-day events, extract date strings to avoid timezone issues
-            const startDateStr = event.start.split('T')[0]; // Get YYYY-MM-DD
-            const endDateStr = event.end.split('T')[0]; // Get YYYY-MM-DD
+            // For all-day events, API returns date strings (YYYY-MM-DD)
+            const startDateStr = event.start; // Already in YYYY-MM-DD format
+            const endDateStr = event.end; // Already in YYYY-MM-DD format
 
-            if (startDateStr === endDateStr) {
+            // Parse dates as UTC to avoid timezone conversion
+            const startParts = startDateStr.split('-').map(Number);
+            const endParts = endDateStr.split('-').map(Number);
+            const start = new Date(Date.UTC(startParts[0], startParts[1] - 1, startParts[2]));
+            const end = new Date(Date.UTC(endParts[0], endParts[1] - 1, endParts[2]));
+
+            // iCal DTEND is exclusive (next day at 00:00), so subtract 1 day for the actual end date
+            const actualEnd = new Date(end.getTime() - 24 * 60 * 60 * 1000);
+
+            // Calculate duration in days
+            const daysDiff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (daysDiff === 1) {
               // Single day all-day event
-              timeDisplay = 'All day';
+              timeDisplay = format(start, 'MM/dd');
             } else {
-              // Multi-day all-day event - calculate days from date strings
-              const start = new Date(startDateStr);
-              const end = new Date(endDateStr);
-              const daysDiff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
-              // Format dates directly from date strings to avoid timezone conversion
-              const startFormatted = format(new Date(startDateStr), 'MM/dd');
-              const endFormatted = format(new Date(endDateStr), 'MM/dd');
+              // Multi-day all-day event
+              const startFormatted = format(start, 'MM/dd');
+              const endFormatted = format(actualEnd, 'MM/dd');
 
               timeDisplay = `${startFormatted} - ${endFormatted} (${daysDiff} days)`;
             }

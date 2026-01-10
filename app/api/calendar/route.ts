@@ -10,8 +10,8 @@ import { getServerConfig } from '@/lib/configHelpers';
 
 interface CalendarEvent {
   title: string;
-  start: Date;
-  end: Date;
+  start: Date | string;
+  end: Date | string;
   description: string;
   location: string;
   isAllDay: boolean;
@@ -59,10 +59,27 @@ export async function GET() {
         // TypeScript definition may not include this property, so we use type assertion
         const isAllDay = (event.startDate as any).isDate === true;
 
+        let start: Date | string;
+        let end: Date | string;
+
+        if (isAllDay) {
+          // For all-day events, return date strings (YYYY-MM-DD) to avoid timezone issues
+          // Access the year, month, day properties directly from ical.js Time object
+          const startTime = event.startDate as any;
+          const endTime = event.endDate as any;
+
+          start = `${startTime.year}-${String(startTime.month).padStart(2, '0')}-${String(startTime.day).padStart(2, '0')}`;
+          end = `${endTime.year}-${String(endTime.month).padStart(2, '0')}-${String(endTime.day).padStart(2, '0')}`;
+        } else {
+          // For timed events, return Date objects (will be serialized to ISO 8601)
+          start = event.startDate.toJSDate();
+          end = event.endDate.toJSDate();
+        }
+
         return {
           title: event.summary,
-          start: event.startDate.toJSDate(),
-          end: event.endDate.toJSDate(),
+          start,
+          end,
           description: event.description || '',
           location: event.location || '',
           isAllDay,
@@ -70,9 +87,15 @@ export async function GET() {
       })
       .filter((event: CalendarEvent) => {
         // Show events that haven't ended yet and start within the next month
-        return event.end >= now && event.start <= oneMonthFromNow;
+        const eventEnd = typeof event.end === 'string' ? new Date(event.end) : event.end;
+        const eventStart = typeof event.start === 'string' ? new Date(event.start) : event.start;
+        return eventEnd >= now && eventStart <= oneMonthFromNow;
       })
-      .sort((a: CalendarEvent, b: CalendarEvent) => a.start.getTime() - b.start.getTime());
+      .sort((a: CalendarEvent, b: CalendarEvent) => {
+        const aStart = typeof a.start === 'string' ? new Date(a.start) : a.start;
+        const bStart = typeof b.start === 'string' ? new Date(b.start) : b.start;
+        return aStart.getTime() - bStart.getTime();
+      });
 
     return createSuccessResponse({ events });
   } catch (error) {
