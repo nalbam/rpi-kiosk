@@ -14,6 +14,7 @@ interface CalendarEvent {
   end: Date;
   description: string;
   location: string;
+  isAllDay: boolean;
 }
 
 export async function GET() {
@@ -52,12 +53,19 @@ export async function GET() {
     const events: CalendarEvent[] = vevents
       .map((vevent: ICAL.Component): CalendarEvent => {
         const event = new ICAL.Event(vevent);
+
+        // Check if this is an all-day event
+        // In iCal, all-day events have isDate=true on the Time object
+        // TypeScript definition may not include this property, so we use type assertion
+        const isAllDay = (event.startDate as any).isDate === true;
+
         return {
           title: event.summary,
           start: event.startDate.toJSDate(),
           end: event.endDate.toJSDate(),
           description: event.description || '',
           location: event.location || '',
+          isAllDay,
         };
       })
       .filter((event: CalendarEvent) => {

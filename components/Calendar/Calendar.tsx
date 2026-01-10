@@ -12,6 +12,7 @@ interface CalendarEvent {
   end: string;
   description: string;
   location: string;
+  isAllDay: boolean;
 }
 
 interface CalendarResponse {
@@ -62,25 +63,26 @@ export default function Calendar() {
           const endDate = new Date(event.end);
           const isSingleDay = isSameDay(startDate, endDate);
 
-          // Check if it's an all-day event
-          // All-day events typically start at 00:00 and end at 00:00 of the next day(s)
-          const isAllDayEvent =
-            startDate.getHours() === 0 &&
-            startDate.getMinutes() === 0 &&
-            endDate.getHours() === 0 &&
-            endDate.getMinutes() === 0;
-
-          // Calculate duration in days for multi-day all-day events
-          const daysDiff = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-
           let timeDisplay = '';
-          if (isAllDayEvent) {
-            if (daysDiff === 1) {
+          if (event.isAllDay) {
+            // For all-day events, extract date strings to avoid timezone issues
+            const startDateStr = event.start.split('T')[0]; // Get YYYY-MM-DD
+            const endDateStr = event.end.split('T')[0]; // Get YYYY-MM-DD
+
+            if (startDateStr === endDateStr) {
               // Single day all-day event
               timeDisplay = 'All day';
             } else {
-              // Multi-day all-day event
-              timeDisplay = `${format(startDate, 'MM/dd')} - ${format(new Date(endDate.getTime() - 1), 'MM/dd')} (${daysDiff} days)`;
+              // Multi-day all-day event - calculate days from date strings
+              const start = new Date(startDateStr);
+              const end = new Date(endDateStr);
+              const daysDiff = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+              // Format dates directly from date strings to avoid timezone conversion
+              const startFormatted = format(new Date(startDateStr), 'MM/dd');
+              const endFormatted = format(new Date(endDateStr), 'MM/dd');
+
+              timeDisplay = `${startFormatted} - ${endFormatted} (${daysDiff} days)`;
             }
           } else {
             // Regular timed event
