@@ -42,6 +42,9 @@ config.json
 *.bak
 *.backup
 
+# claude
+.claude/
+
 # Prompt
 .prompt-*.md
 .prompt.md
